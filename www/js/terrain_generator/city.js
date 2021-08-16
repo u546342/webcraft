@@ -17,6 +17,8 @@ export default class Terrain_Generator {
         const seed                  = chunk.id;
         const aleaRandom            = new alea(seed);
 
+        const BRICK = blocks.BRICK;
+
         for(let x = 0; x < chunk.size.x; x++) {
             for(let z = 0; z < chunk.size.z; z++) {
                 // AIR
@@ -30,7 +32,7 @@ export default class Terrain_Generator {
                     if(z > 5 && z < 10) {
                         let height = parseInt(aleaRandom.double() * 10 + 5);
                         for(let y = 1; y < height; y++) {
-                            chunk.blocks[x][z][y] = blocks.BRICK;
+                            chunk.blocks[x][z][y] = BRICK;
                         }
                     }
                 }
