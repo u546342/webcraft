@@ -1,5 +1,5 @@
 import {blocks} from '../biomes.js';
-import { Color, Vector } from '../helpers.js';
+import {Color, Helpers, Vector} from '../helpers.js';
 import {impl as alea} from '../../vendors/alea.js';
 import {BLOCK} from '../blocks.js';
 
@@ -65,58 +65,67 @@ export default class Terrain_Generator {
 
         // этажи
 
-        if (aleaRandom.double() * 10 > 1) {
-            let levels = aleaRandom.double() * 10 + 4;
-            if (levels > 8) {
-                levels = aleaRandom.double() * 10 + 4;
+        let levels = aleaRandom.double() * 10 + 4;
+        if (levels > 8) {
+            levels = aleaRandom.double() * 10 + 4;
+        }
+        levels = levels | 0;
+
+        let H = 1;
+        let mainColor = blocks1[(Math.random() * blocks1.length | 0)];
+
+        if (aleaRandom.double() * 10 < 1) {
+            levels = -1;
+            H = 0;
+        }
+
+        for (let level = 1; level <= levels + 1; level++) {
+            let h = (aleaRandom.double() * 2 | 0) + 3;
+
+            if (level === levels + 1) {
+                h = 0;
             }
-            levels = levels | 0;
-
-            let H = 1;
-            let mainColor = blocks1[(Math.random() * blocks1.length | 0)];
-
-            for (let level = 1; level <= levels + 1; level++) {
-                let h = (aleaRandom.double() * 2 | 0) + 3;
-
-                if (level === levels + 1) {
-                    h = 0;
-                }
-                let y = H;
-                for (let x = 2; x <= 12; x++) {
-                    for (let z = 3; z <= 13; z++) {
-                        chunk.blocks[x][z][y] = mainColor;
-                    }
-                }
-
-                if (aleaRandom.double() * 10 < 1) {
-                    mainColor = blocks1[(Math.random() * blocks1.length | 0)];
-                }
-
-                for (let y = H + 1; y <= H + h; y++) {
-                    for (let x = 0; x <= 10; x++) {
-                        let b = GLASS;
-                        if (x == 0 || x == 3 || x == 7 || x == 10) {
-                            b = BRICK;
-                        }
-                        chunk.blocks[x + 2][3][y] = b;
-                        chunk.blocks[x + 2][13][y] = b;
-
-                        chunk.blocks[2][x + 3][y] = b;
-                        chunk.blocks[12][x + 3][y] = b;
-                    }
-                }
-
-                H += h + 1;
-            }
-        } else {
-            for (let x = 6; x <= 10; x++) {
-                for (let z = 6; z <= 10; z++) {
-                    let height = parseInt(aleaRandom.double() * 10 + 5);
-                    for (let y = 1; y < height; y++) {
-                        chunk.blocks[x][z][y] = BRICK;
-                    }
+            let y = H;
+            for (let x = 2; x <= 12; x++) {
+                for (let z = 3; z <= 13; z++) {
+                    chunk.blocks[x][z][y] = mainColor;
                 }
             }
+
+            if (aleaRandom.double() * 10 < 1) {
+                mainColor = blocks1[(Math.random() * blocks1.length | 0)];
+            }
+
+            for (let y = H + 1; y <= H + h; y++) {
+                for (let x = 0; x <= 10; x++) {
+                    let b = GLASS;
+                    if (x == 0 || x == 3 || x == 7 || x == 10) {
+                        b = BRICK;
+                    }
+                    chunk.blocks[x + 2][3][y] = b;
+                    chunk.blocks[x + 2][13][y] = b;
+
+                    chunk.blocks[2][x + 3][y] = b;
+                    chunk.blocks[12][x + 3][y] = b;
+                }
+            }
+
+            H += h + 1;
+        }
+
+        if (levels < 0 || aleaRandom.double() * 20 < 1) {
+            for (let x = 3; x <= 11; x++) {
+                for (let z = 4; z <= 12; z++) {
+                    chunk.blocks[x][z][H] = blocks.DIRT;
+                }
+            }
+            this.plantTree({
+                height: (aleaRandom.double()*4|0) + 5,
+                type: {
+                    trunk: blocks.SPRUCE, leaves: blocks.SPRUCE_LEAVES, height: 7
+                }
+            }, chunk,
+                5 + (aleaRandom.double() * 4 | 0), H+1, 5 + (aleaRandom.double() * 4 | 0));
         }
 
         // разметка
@@ -138,6 +147,44 @@ export default class Terrain_Generator {
             }
         };
 
+    }
+
+    plantTree(options, chunk, x, y, z) {
+        const height        = options.height;
+        const type        = options.type;
+        let ystart = y + height;
+        // ствол
+        for(let p = y; p < ystart; p++) {
+            if(chunk.getBlock(x + chunk.coord.x, p + chunk.coord.y, z + chunk.coord.z).id >= 0) {
+                if(x >= 0 && x < chunk.size.x && z >= 0 && z < chunk.size.z) {
+                    chunk.blocks[x][z][p] = type.trunk;
+                }
+            }
+        }
+        // дуб, берёза
+        let py = y + height;
+        for(let rad of [1, 1, 2, 2]) {
+            for(let i = x - rad; i <= x + rad; i++) {
+                for(let j = z - rad; j <= z + rad; j++) {
+                    if(i >= 0 && i < chunk.size.x && j >= 0 && j < chunk.size.z) {
+                        let m = (i == x - rad && j == z - rad) ||
+                            (i == x + rad && j == z + rad) ||
+                            (i == x - rad && j == z + rad) ||
+                            (i == x + rad && j == z - rad);
+                        let m2 = (py == y + height) ||
+                            (i + chunk.coord.x + j + chunk.coord.z + py) % 3 > 0;
+                        if(m && m2) {
+                            continue;
+                        }
+                        let b = chunk.blocks[i][j][py];
+                        if(!b || b.id >= 0 && b.id != type.trunk.id) {
+                            chunk.blocks[i][j][py] = type.leaves;
+                        }
+                    }
+                }
+            }
+            py--;
+        }
     }
 
 }
