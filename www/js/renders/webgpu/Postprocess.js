@@ -1,7 +1,19 @@
 const SHADER = `
+[[block]] struct Uniform {
+    near: f32;
+    far: f32;
+    distance: f32;
+    intensity: f32;
+    count: f32;
+    time: f32;
+    depth_dist: f32;
+    smooth: f32;
+    debug: f32;
+};
+
 // how many distance between tests for depth evaluation
-let DEPTH_DIST: f32 = 0.02;
-let FOV: f32 = 0.2;
+let DEPTH_DIST: f32 = 0.01;
+let FOV: f32 = 0.3;
 let NOISE: f32 = 0.2;
 
 fn nrand( n : vec2<f32> ) -> f32
@@ -17,7 +29,7 @@ fn perspectiveDepthToViewZ(invClipZ : f32, near : f32, far: f32) -> f32 {
 fn worldDistToTexel(uv: vec2<f32>, depth: f32) -> f32 {
     var angle = 2. * (uv - vec2<f32>(0.5)) * FOV;
 
-    return length(depth / cos(angle));
+    return length(depth * cos(angle));
 }
 
 struct VertexOutput {
@@ -43,14 +55,6 @@ fn main_vert([[builtin(vertex_index)]] v_index : u32) -> VertexOutput{
     return output;
 }
 
-[[block]] struct Uniform {
-    near: f32;
-    far: f32;
-    distance: f32;
-    intensity: f32;
-    count: f32;
-    time: f32;
-};
 
 [[group(0), binding(0)]] var u_depth: texture_depth_2d;
 [[group(0), binding(1)]] var u_color: texture_2d<f32>;
@@ -64,7 +68,7 @@ fn getD(coord: vec2<f32>) -> f32 {
   var texDepth = textureLoad(u_depth, fp,0);
   var viewZ = -0.7 * perspectiveDepthToViewZ(texDepth, ubo.near, ubo.far);
 
-  return viewZ;//worldDistToTexel(coord, viewZ);  
+  return worldDistToTexel(coord, viewZ);  
 }
 
 fn sampleNoise(coord: vec2<f32>, depth: f32, factor: f32) -> vec4<f32> 
@@ -89,7 +93,7 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   // get median depth
   for(var i = -1; i <=1; i = i + 1) {
     for(var j = -1; j <=1; j = j + 1) {
-        avgDepth = avgDepth + getD(center + DEPTH_DIST * vec2<f32>(f32(i), f32(j)));
+        avgDepth = avgDepth + getD(center + ubo.depth_dist * vec2<f32>(f32(i), f32(j)));
     } 
   }
   
@@ -98,7 +102,7 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   var minDepth: f32 = centerDepth - avgDepth;
   var maxDepth: f32 = centerDepth + avgDepth;
   
-  let dof = (1. - smoothStep(maxDepth, maxDepth + avgDepth * 2., texelDepth)) * smoothStep(minDepth - avgDepth * 2., avgDepth, texelDepth);
+  let dof = 1. - smoothStep(avgDepth, avgDepth * ubo.smooth, abs(centerDepth - texelDepth));
   let factor = 1. - dof;
 
   var c = textureSample(u_color, u_sampler, coord);
@@ -116,7 +120,10 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   }
   
   c = blur / f32(runs * runs);
-
+  if (ubo.debug > 0.) {
+    c = vec4<f32>(c.rgb * factor, 1.);
+  } 
+  
   return vec4<f32> (c.rgb, 1.0);
 }
 `;
@@ -172,8 +179,23 @@ export class Postprocess {
             0,//distance,
             1,//intensity,
             2,//count of blur,
-            0
+            0, //time
+            0.01, //depth dist,
+            5, // smooth
+            0, // debug
         ]);
+
+        this.props = {
+            far: 10,
+            near: 1000,
+            intensity: 1,
+            passes: 3,
+            depthTest: 0.01,
+            smooth: 3,
+            debug: 0
+        };
+
+        self.POPS_PROPS = this.props;
 
         this.ubo = device.createBuffer({
             size: this.data.byteLength,
@@ -265,14 +287,9 @@ export class Postprocess {
                    distance = 100,
                    intensity = 1,
     }) {
-        this.data.set([
-            near,
-            far,
-            distance,
-            intensity,
-            5,
-            0
-        ]);
+        this.props.far = far;
+        this.props.near = near;
+        this.props.intensity = intensity;
     }
 
     /**
@@ -284,6 +301,19 @@ export class Postprocess {
             device,
             size
         } = this.context;
+
+        
+        this.data.set([
+            this.props.near,
+            this.props.far,
+            0,
+            this.props.intensity,
+            this.props.passes,
+            performance.now(),
+            this.props.depthTest,
+            this.props.smooth,
+            this.props.debug
+        ]);
 
         this.data[5] = performance.now();
 
