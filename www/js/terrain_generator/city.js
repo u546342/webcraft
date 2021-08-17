@@ -37,8 +37,11 @@ export default class Terrain_Generator {
 
         const { blocks1 } = this;
 
-        if(aleaRandom.double() < .2) {
+        let r = aleaRandom.double();
+        if(r < .2) {
             BRICK = blocks.STONE;
+        } else if (r < .4) {
+            BRICK = blocks.STONE_BRICK;
         }
 
         for(let x = 0; x < chunk.size.x; x++) {
@@ -48,58 +51,106 @@ export default class Terrain_Generator {
             }
         }
 
-        for(let x = 0; x < chunk.size.x; x++) {
-            for (let z = 0; z < chunk.size.z; z++) {
-                for (let y = 0; y < 1; y++) {
-                    if (x > 0 && x < 14 && z > 1 && z < 15) {
-                        // территория строений
-                        // трава
-                        if (x >= 2 && x <= 12 && z >= 3 && z <= 13) {
-                            chunk.blocks[x][z][y] = blocks.DIRT;
-                        } else {
-                            chunk.blocks[x][z][y] = blocks.STONE;
-                        }
-                    } else {
-                        // дороги вокруг дома
-                        chunk.blocks[x][z][y] = blocks.BEDROCK;
+        if(chunk.addr.x % 10 == 0) {
+
+            for(let x = 0; x < chunk.size.x; x++) {
+                for (let z = 0; z < chunk.size.z; z++) {
+                    if(x == 0 || x >= 14) {
+                        chunk.blocks[x][z][0] = blocks.BEDROCK;
+                    } else if (x == 1 || x == 13) {
+                        chunk.blocks[x][z][0] = blocks.STONE;
+                    } else if(x) {
+                        chunk.blocks[x][z][0] = blocks.DIRT;
                     }
                 }
             }
-        }
 
-        // этажи
-
-        let levels = aleaRandom.double() * 10 + 4;
-        if (levels > 8) {
-            levels = aleaRandom.double() * 10 + 4;
-        }
-        levels = levels | 0;
-
-        let H = 1;
-        let mainColor = blocks1[(Math.random() * blocks1.length | 0)];
-
-        if (aleaRandom.double() * 10 < 1) {
-            levels = -1;
-            H = 0;
-        }
-
-        for (let level = 1; level <= levels + 1; level++) {
-            let h = (aleaRandom.double() * 2 | 0) + 3;
-
-            if (level === levels + 1) {
-                h = 0;
-            }
-            let y = H;
-            for (let x = 2; x <= 12; x++) {
-                for (let z = 3; z <= 13; z++) {
-                    chunk.blocks[x][z][y] = mainColor;
+            // ЖД
+            for(let z = 0; z < chunk.size.z; z++) {
+                // рельсы
+                chunk.blocks[7][z][12] = blocks.PLANK;
+                // по краям рельс
+                chunk.blocks[6][z][12] = blocks.STONE_BRICK;
+                chunk.blocks[7][z][12] = blocks.STONE_BRICK;
+                // шпалы
+                if(z % 2 == 0) {
+                    for(let a of [4, 5, 6, 7, 8, 9]) {
+                        chunk.blocks[a][z][12 + 1] = blocks.STONE;
+                    }
+                }
+                // рельсы
+                for(let y = 14; y < 15; y++) {
+                    chunk.blocks[5][z][y] = blocks.WOOL_BLACK;
+                    chunk.blocks[8][z][y] = blocks.WOOL_BLACK;
+                }
+                // столбы
+                if(z == 4) {
+                    for(let y = 0; y < 12; y++) {
+                        chunk.blocks[5][z][y] = blocks.STONE_BRICK;
+                        chunk.blocks[8][z][y] = blocks.STONE_BRICK;
+                    }
                 }
             }
+
+            // разметка
+            for(let x = 1; x < chunk.size.z-2; x += 2) {
+                chunk.blocks[15][x + 1][0] = blocks.SNOW_BLOCK;
+            }
+
+        } else {
+
+            for(let x = 0; x < chunk.size.x; x++) {
+                for (let z = 0; z < chunk.size.z; z++) {
+                    for (let y = 0; y < 1; y++) {
+                        if (x > 0 && x < 14 && z > 1 && z < 15) {
+                            // территория строений
+                            // трава
+                            if (x >= 2 && x <= 12 && z >= 3 && z <= 13) {
+                                chunk.blocks[x][z][y] = blocks.DIRT;
+                            } else {
+                                chunk.blocks[x][z][y] = blocks.STONE;
+                            }
+                        } else {
+                            // дороги вокруг дома
+                            chunk.blocks[x][z][y] = blocks.BEDROCK;
+                        }
+                    }
+                }
+            }
+
+            // этажи
+
+            let levels = aleaRandom.double() * 10 + 4;
+            if (levels > 8) {
+                levels = aleaRandom.double() * 10 + 4;
+            }
+            levels = levels | 0;
+
+            let H = 1;
+            let mainColor = blocks1[(Math.random() * blocks1.length | 0)];
+
+            if (aleaRandom.double() * 10 < 1) {
+                levels = -1;
+                H = 0;
+            }
+
+            for (let level = 1; level <= levels + 1; level++) {
+                let h = (aleaRandom.double() * 2 | 0) + 3;
+
+                if (level === levels + 1) {
+                    h = 0;
+                }
+                let y = H;
+                for (let x = 2; x <= 12; x++) {
+                    for (let z = 3; z <= 13; z++) {
+                        chunk.blocks[x][z][y] = mainColor;
+                    }
+                }
 
                 // строения на крыше
                 if (level === levels + 1) {
                     for(let sz of [1, 2, 2]) {
-                        let ceil_x = 3 + parseInt(aleaRandom.double() * 9);
+                        let ceil_x = 3 + parseInt(aleaRandom.double() * 8);
                         let ceil_z = 4 + parseInt(aleaRandom.double() * 8);
                         for(let i = 0; i < sz; i++) {
                             for(let j = 0; j < sz; j++) {
@@ -109,47 +160,48 @@ export default class Terrain_Generator {
                     }
                 }
 
+                if (aleaRandom.double() * 10 < 1) {
+                    mainColor = blocks1[(Math.random() * blocks1.length | 0)];
+                }
 
-            if (aleaRandom.double() * 10 < 1) {
-                mainColor = blocks1[(Math.random() * blocks1.length | 0)];
-            }
+                for (let y = H + 1; y <= H + h; y++) {
+                    for (let x = 0; x <= 10; x++) {
+                        let b = GLASS;
+                        if (x == 0 || x == 3 || x == 7 || x == 10) {
+                            b = BRICK;
+                        }
+                        chunk.blocks[x + 2][3][y] = b;
+                        chunk.blocks[x + 2][13][y] = b;
 
-            for (let y = H + 1; y <= H + h; y++) {
-                for (let x = 0; x <= 10; x++) {
-                    let b = GLASS;
-                    if (x == 0 || x == 3 || x == 7 || x == 10) {
-                        b = BRICK;
+                        chunk.blocks[2][x + 3][y] = b;
+                        chunk.blocks[12][x + 3][y] = b;
                     }
-                    chunk.blocks[x + 2][3][y] = b;
-                    chunk.blocks[x + 2][13][y] = b;
-
-                    chunk.blocks[2][x + 3][y] = b;
-                    chunk.blocks[12][x + 3][y] = b;
                 }
+
+                H += h + 1;
             }
 
-            H += h + 1;
-        }
-
-        if (levels < 0 || aleaRandom.double() * 20 < 1) {
-            for (let x = 3; x <= 11; x++) {
-                for (let z = 4; z <= 12; z++) {
-                    chunk.blocks[x][z][H] = blocks.DIRT;
+            if (levels < 0 || aleaRandom.double() * 20 < 1) {
+                for (let x = 3; x <= 11; x++) {
+                    for (let z = 4; z <= 12; z++) {
+                        chunk.blocks[x][z][H] = blocks.DIRT;
+                    }
                 }
+                this.plantTree({
+                    height: (aleaRandom.double()*4|0) + 5,
+                    type: {
+                        trunk: blocks.SPRUCE, leaves: blocks.SPRUCE_LEAVES, height: 7
+                    }
+                }, chunk,
+                    5 + (aleaRandom.double() * 4 | 0), H+1, 5 + (aleaRandom.double() * 4 | 0));
             }
-            this.plantTree({
-                height: (aleaRandom.double()*4|0) + 5,
-                type: {
-                    trunk: blocks.SPRUCE, leaves: blocks.SPRUCE_LEAVES, height: 7
-                }
-            }, chunk,
-                5 + (aleaRandom.double() * 4 | 0), H+1, 5 + (aleaRandom.double() * 4 | 0));
-        }
 
-        // разметка
-        for(let x = 1; x < chunk.size.z-2; x += 2) {
-            chunk.blocks[x][0][0] = blocks.SNOW_BLOCK;
-            chunk.blocks[15][x + 1][0] = blocks.SNOW_BLOCK;
+            // разметка
+            for(let x = 1; x < chunk.size.z-2; x += 2) {
+                chunk.blocks[x][0][0] = blocks.SNOW_BLOCK;
+                chunk.blocks[15][x + 1][0] = blocks.SNOW_BLOCK;
+            }
+
         }
 
         let cell = {biome: {dirt_color: new Color(980 / 1024, 980 / 1024, 0, 0)}};
