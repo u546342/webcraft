@@ -381,6 +381,9 @@ class Chunk {
                         block = this.blocks[x][z][y] = Object.create(block);
                         block.vertices = [];
                         const biome = this.map.info.cells[x][z].biome;
+                        if(!biome) {
+                            debugger;
+                        }
                         BLOCK.pushVertices(block.vertices, block, world, lightmap, x + this.coord.x, y + this.coord.y, z + this.coord.z, neighbours, biome);
                     }
                     world.blocks_pushed++;

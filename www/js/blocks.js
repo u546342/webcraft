@@ -8,7 +8,7 @@ import {BLOCK_FUNC} from './blocks_func.js';
 // ==========================================
 
 export const CHUNK_SIZE_X      = 16;
-export const CHUNK_SIZE_Y      = 256;
+export const CHUNK_SIZE_Y      = 64;
 export const CHUNK_SIZE_Z      = 16;
 export const DIRT_HEIGHT       = 32;
 

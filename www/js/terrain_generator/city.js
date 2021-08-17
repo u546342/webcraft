@@ -1,5 +1,5 @@
 import {blocks} from '../biomes.js';
-import { Color } from '../helpers.js';
+import { Color, Vector } from '../helpers.js';
 import {impl as alea} from '../../vendors/alea.js';
 
 export default class Terrain_Generator {
@@ -21,9 +21,20 @@ export default class Terrain_Generator {
             for(let z = 0; z < chunk.size.z; z++) {
                 // AIR
                 chunk.blocks[x][z] = Array(chunk.size.y).fill(null);
-                // BEDROCK
+
                 for(let y = 0; y < 1; y++) {
-                    chunk.blocks[x][z][y] = blocks.BEDROCK;
+                    if(x > 0 && x < 14 && z > 1 && z < 15) {
+                        // территория строений
+                        // трава
+                        if(x >= 2 && x <= 12 && z >= 3 && z <= 13) {
+                            chunk.blocks[x][z][y] = blocks.DIRT;
+                        } else {
+                            chunk.blocks[x][z][y] = blocks.STONE;
+                        }
+                    } else {
+                        // дороги вокруг дома
+                        chunk.blocks[x][z][y] = blocks.BEDROCK;
+                    }
                 }
 
                 if(x > 5 && x < 10) {
@@ -38,8 +49,14 @@ export default class Terrain_Generator {
             }
         }
 
-        let biome = {};
-        let cells = Array(chunk.size.x).fill(null).map(el => Array(chunk.size.z).fill(biome));
+        // разметка
+        for(let x = 1; x < chunk.size.z-2; x += 2) {
+            chunk.blocks[x][0][0] = blocks.SNOW_BLOCK;
+            chunk.blocks[15][x + 1][0] = blocks.SNOW_BLOCK;
+        }
+
+        let cell = {biome: {dirt_color: new Color(980 / 1024, 980 / 1024, 0, 0)}};
+        let cells = Array(chunk.size.x).fill(null).map(el => Array(chunk.size.z).fill(cell));
 
         return {
             chunk: chunk,
