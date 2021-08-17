@@ -10,6 +10,7 @@ export let MULTIPLY = {
 export let QUAD_FLAGS = {}
 QUAD_FLAGS.NORMAL_UP = 1;
 QUAD_FLAGS.MASK_BIOME = 2;
+QUAD_FLAGS.LIGHT = 4;
 
 export class BLOCK_FUNC {
 
@@ -167,6 +168,9 @@ function push_cube(block, vertices, world, lightmap, x, y, z, neighbours, biome)
         lm = biome.dirt_color; // MULTIPLY.COLOR.GRASS;
         sideFlags = QUAD_FLAGS.MASK_BIOME;
         upFlags = QUAD_FLAGS.MASK_BIOME;
+    }
+    if (block.lightPower) {
+        flags = QUAD_FLAGS.LIGHT;
     }
 
     let DIRECTION_UP            = DIRECTION.UP;

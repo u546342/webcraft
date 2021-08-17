@@ -72,8 +72,11 @@ fn main_vert(a : Attrs) -> VertexOutput {
     v.color = vec4<f32>(a.color, dot(a.occlusion, a.quadOcc));
 
     // find flags
-    var flagBiome : f32 = step(1.5, a.flags);
-    var flags : f32 = a.flags - flagBiome * 2.0;
+
+    var flagLight : f32 = step(3.5, a.flags);
+    var flags : f32 = a.flags - flagLight * 4.0;
+    var flagBiome : f32 = step(1.5, flags);
+    flags = flags - flagBiome * 2.0;
     var flagNormalUp : f32 = step(0.5, flags);
 
     if (flagNormalUp > 0.0) {
@@ -91,6 +94,10 @@ fn main_vert(a : Attrs) -> VertexOutput {
     var sun_dir : vec3<f32> = vec3<f32>(0.7, 1.0, 0.85);
     var n : vec3<f32> = normalize(v.normal);
     v.light = max(.5, dot(n, sun_dir) - v.color.a);
+
+    if (flagLight > 0.0) {
+        v.light = 1.0;
+    }
 
     if(u.fogOn > 0.0) {
         if (flagBiome < 0.5) {

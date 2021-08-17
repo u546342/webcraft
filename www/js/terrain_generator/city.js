@@ -34,8 +34,11 @@ export default class Terrain_Generator {
 
         let BRICK = blocks.BRICK;
         const GLASS = blocks.GLASS;
+        let LIGHT = blocks.GLOWSTONE;
 
         const { blocks1 } = this;
+
+        const wnd = [0,0,0,0,0,0,0,0,0];
 
         let r = aleaRandom.double();
         if(r < .2) {
@@ -164,17 +167,28 @@ export default class Terrain_Generator {
                     mainColor = blocks1[(Math.random() * blocks1.length | 0)];
                 }
 
+                for (let i=0;i<12;i++) {
+                    wnd[i] = aleaRandom.double() * 12 < 1.0 ? LIGHT : GLASS;
+                }
+
                 for (let y = H + 1; y <= H + h; y++) {
                     for (let x = 0; x <= 10; x++) {
-                        let b = GLASS;
-                        if (x == 0 || x == 3 || x == 7 || x == 10) {
-                            b = BRICK;
-                        }
-                        chunk.blocks[x + 2][3][y] = b;
-                        chunk.blocks[x + 2][13][y] = b;
+                        let b = -1;
 
-                        chunk.blocks[2][x + 3][y] = b;
-                        chunk.blocks[12][x + 3][y] = b;
+                        if (x > 0 && x < 3) {
+                            b = 0;
+                        }
+                        if (x > 3 && x < 7) {
+                            b = 1;
+                        }
+                        if (x > 7 && x < 10) {
+                            b = 2;
+                        }
+
+                        chunk.blocks[x + 2][3][y] = b >= 0 ? wnd[b * 4 + 0]: BRICK;
+                        chunk.blocks[x + 2][13][y] = b >= 0 ? wnd[b * 4 + 1]: BRICK;
+                        chunk.blocks[2][x + 3][y] = b >= 0 ? wnd[b * 4 + 2]: BRICK;
+                        chunk.blocks[12][x + 3][y] = b >= 0 ? wnd[b * 4 + 3]: BRICK;
                     }
                 }
 
