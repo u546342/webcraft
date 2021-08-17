@@ -1,8 +1,8 @@
 const SHADER = `
 // how many distance between tests for depth evaluation
-let DEPTH_DIST: f32 = 0.01;
+let DEPTH_DIST: f32 = 0.02;
 let FOV: f32 = 0.2;
-let NOISE: f32 = 0.1;
+let NOISE: f32 = 0.2;
 
 fn nrand( n : vec2<f32> ) -> f32
 {
@@ -49,6 +49,7 @@ fn main_vert([[builtin(vertex_index)]] v_index : u32) -> VertexOutput{
     distance: f32;
     intensity: f32;
     count: f32;
+    time: f32;
 };
 
 [[group(0), binding(0)]] var u_depth: texture_depth_2d;
@@ -68,7 +69,7 @@ fn getD(coord: vec2<f32>) -> f32 {
 
 fn sampleNoise(coord: vec2<f32>, depth: f32, factor: f32) -> vec4<f32> 
 {
-     var n = nrand(coord + vec2<f32>(depth, 0.0));
+     var n = nrand(coord + vec2<f32>(depth * fract(ubo.time) * 10., 0.0));
      var nc = mix(vec4<f32>(1.), vec4<f32>(n, n, n, 1.),  NOISE * factor);
      
      return textureSample(u_color, u_sampler, coord) * nc * (1. + NOISE * factor * 0.5);
@@ -97,7 +98,7 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   var minDepth: f32 = centerDepth - avgDepth;
   var maxDepth: f32 = centerDepth + avgDepth;
   
-  let dof = (1. - smoothStep(maxDepth, maxDepth + avgDepth, texelDepth)) * smoothStep(minDepth - avgDepth, avgDepth, texelDepth);
+  let dof = (1. - smoothStep(maxDepth, maxDepth + avgDepth * 2., texelDepth)) * smoothStep(minDepth - avgDepth * 2., avgDepth, texelDepth);
   let factor = 1. - dof;
 
   var c = textureSample(u_color, u_sampler, coord);
@@ -170,7 +171,8 @@ export class Postprocess {
             1000,//far,
             0,//distance,
             1,//intensity,
-            2,//count of blur
+            2,//count of blur,
+            0
         ]);
 
         this.ubo = device.createBuffer({
@@ -268,7 +270,8 @@ export class Postprocess {
             far,
             distance,
             intensity,
-            3
+            5,
+            0
         ]);
     }
 
@@ -281,6 +284,8 @@ export class Postprocess {
             device,
             size
         } = this.context;
+
+        this.data[5] = performance.now();
 
         if (!this.group) {
             this.resize(size.width, size.height);
