@@ -92,6 +92,20 @@ export default class Terrain_Generator {
                 }
             }
 
+                // строения на крыше
+                if (level === levels + 1) {
+                    for(let sz of [1, 2, 2]) {
+                        let ceil_x = 3 + parseInt(aleaRandom.double() * 9);
+                        let ceil_z = 4 + parseInt(aleaRandom.double() * 8);
+                        for(let i = 0; i < sz; i++) {
+                            for(let j = 0; j < sz; j++) {
+                                chunk.blocks[ceil_x + i][ceil_z + j][H + 1] = mainColor;
+                            }
+                        }
+                    }
+                }
+
+
             if (aleaRandom.double() * 10 < 1) {
                 mainColor = blocks1[(Math.random() * blocks1.length | 0)];
             }
