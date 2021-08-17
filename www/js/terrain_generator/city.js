@@ -32,10 +32,14 @@ export default class Terrain_Generator {
         const seed                  = chunk.id;
         const aleaRandom            = new alea(seed);
 
-        const BRICK = blocks.BRICK;
+        let BRICK = blocks.BRICK;
         const GLASS = blocks.GLASS;
 
         const { blocks1 } = this;
+
+        if(aleaRandom.double() < .2) {
+            BRICK = blocks.STONE;
+        }
 
         for(let x = 0; x < chunk.size.x; x++) {
             for (let z = 0; z < chunk.size.z; z++) {
