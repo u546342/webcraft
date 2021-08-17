@@ -5,10 +5,13 @@ import {WebGPUMaterial} from "./WebGPUMaterial.js";
 import {WebGPUTexture} from "./WebGPUTexture.js";
 import {WebGPUBuffer} from "./WebGPUBuffer.js";
 import {WebGPUCubeShader} from "./WebGPUCubeShader.js";
+import {Postprocess} from "./Postprocess.js";
 
 export default class WebGPURenderer extends BaseRenderer{
     constructor(view, options) {
         super(view, options);
+
+        this.useDof = options.dof;
         /**
          *
          * @type {GPUDevice} {null}
@@ -24,11 +27,6 @@ export default class WebGPURenderer extends BaseRenderer{
          * @type {GPUCanvasContext}
          */
         this.context = null;
-        /**
-         *
-         * @type {GPURenderPipeline}
-         */
-        this.activePipeline = null;
 
         this.format = '';
 
@@ -44,19 +42,27 @@ export default class WebGPURenderer extends BaseRenderer{
          */
         this.passEncoder = null;
 
-        this.passedBuffers = [];
-
         /**
          *
          * @type {GPUTexture}
          */
         this.depth = null;
+        /**
+         *
+         * @type {GPUTexture}
+         */
+        this.main = null;
 
         this.subMats = [];
+
+        /**
+         * @type {Postprocess}
+         */
+        this.postProcess = null;
     }
 
     get currentBackTexture() {
-        return this.context.getCurrentTexture().createView();
+        return this.postProcess ? this.main.createView() : this.context.getCurrentTexture().createView();
     }
 
     createShader(options = {}) {
@@ -159,18 +165,27 @@ export default class WebGPURenderer extends BaseRenderer{
 
     endFrame() {
         this.passEncoder.endPass();
+
+        if (this.postProcess) {
+            this.postProcess.run(this.encoder, this.context.getCurrentTexture().createView());
+            //this.postProcess.blit(this.encoder, this.context.getCurrentTexture().createView());
+        }
+
         this.device.queue.submit([this.encoder.finish()]);
 
         this.subMats.forEach(e => e.destroy());
         this.subMats.length = 0;
     }
 
-    async init() {
+    async init({dof = false} = {}) {
         this.adapter = await navigator.gpu.requestAdapter();
         this.device = await this.adapter.requestDevice();
         this.context = this.view.getContext('webgpu');
         this.format = this.context.getPreferredFormat(this.adapter);
 
+        this.useDof = dof;
+        if(dof)
+            this.postProcess = new Postprocess(this, {});
     }
 
     resize(w, h) {
@@ -182,6 +197,7 @@ export default class WebGPURenderer extends BaseRenderer{
 
         this.view.width = w;
         this.view.height = h;
+
     }
 
     _configure() {
@@ -202,8 +218,17 @@ export default class WebGPURenderer extends BaseRenderer{
         this.depth = this.device.createTexture({
             size: this.size,
             format: 'depth24plus',
-            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
         });
+
+        this.main = this.device.createTexture({
+            size: this.size,
+            format: this.format,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        });
+
+        if(this.postProcess)
+            this.postProcess.resize(this.size.width, this.size.height);
     }
 }
 
