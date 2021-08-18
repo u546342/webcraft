@@ -120,6 +120,10 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
       }
   }
   
+  if (texelDepth > ubo.far * .5) {
+    light.r = 1.;
+  }
+  
   c = blur / f32(runs * runs);
   if (ubo.debug > 0.) {
     c = vec4<f32>(c.rgb * factor, 1.);
@@ -326,7 +330,7 @@ export class Postprocess {
             size
         } = this.context;
 
-        
+
         const blurPassDesc = {
             colorAttachments: [
                 {
@@ -338,8 +342,8 @@ export class Postprocess {
         };
 
         for(let i = 0; i < 3; i ++) {
-            const binding = i === 0 
-                ? this.blitGroupPrepas 
+            const binding = i === 0
+                ? this.blitGroupPrepas
                 : this.blitGroupSwap[(i - 1) % 2];
 
             const target = this.blitResult[(i % 2)].createView();
@@ -347,15 +351,15 @@ export class Postprocess {
             blurPassDesc.colorAttachments[0].view = target;
 
             const blurPass = commandEncoder.beginRenderPass(blurPassDesc);
-            
+
             blurPass.setPipeline(this.blitPipeline);
             //renderPass.setViewport(size.width - 200,0, 200, 200, 0, 1);
             blurPass.setBindGroup(0, binding);
             blurPass.draw(6);
             blurPass.endPass();
         }
-        
-        
+
+
         this.data.set([
             this.props.near,
             this.props.far,
@@ -395,7 +399,7 @@ export class Postprocess {
 
     resize(w, h) {
         const { device, size, format } = this.context;
-        
+
         this.blitResult = [
                 device.createTexture({
                     size: size,
