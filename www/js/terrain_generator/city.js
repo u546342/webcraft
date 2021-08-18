@@ -168,7 +168,7 @@ export default class Terrain_Generator {
                 }
 
                 for (let i=0;i<12;i++) {
-                    wnd[i] = aleaRandom.double() * 12 < 1.0 ? LIGHT : GLASS;
+                    wnd[i] = aleaRandom.double() * 12 < 1.0 ? LIGHT : null;
                 }
 
                 for (let y = H + 1; y <= H + h; y++) {
@@ -185,10 +185,17 @@ export default class Terrain_Generator {
                             b = 2;
                         }
 
-                        chunk.blocks[x + 2][3][y] = b >= 0 ? wnd[b * 4 + 0]: BRICK;
-                        chunk.blocks[x + 2][13][y] = b >= 0 ? wnd[b * 4 + 1]: BRICK;
-                        chunk.blocks[2][x + 3][y] = b >= 0 ? wnd[b * 4 + 2]: BRICK;
-                        chunk.blocks[12][x + 3][y] = b >= 0 ? wnd[b * 4 + 3]: BRICK;
+                        chunk.blocks[x + 2][3][y] = b >= 0 ? GLASS : BRICK;
+                        chunk.blocks[x + 2][13][y] = b >= 0 ? GLASS: BRICK;
+                        chunk.blocks[2][x + 3][y] = b >= 0 ? GLASS: BRICK;
+                        chunk.blocks[12][x + 3][y] = b >= 0 ? GLASS: BRICK;
+
+                        if (b > 0 && x > 0 && x < 10) {
+                            chunk.blocks[x + 2][4][y] ||= wnd[b * 4 + 0];
+                            chunk.blocks[x + 2][12][y] ||= wnd[b * 4 + 1];
+                            chunk.blocks[3][x + 3][y] ||= wnd[b * 4 + 2];
+                            chunk.blocks[11][x + 3][y] ||= wnd[b * 4 + 3];
+                        }
                     }
                 }
 
