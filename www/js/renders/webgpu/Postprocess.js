@@ -97,7 +97,7 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
         avgDepth = avgDepth + getD(center + ubo.depth_dist * vec2<f32>(f32(i), f32(j)));
     } 
   }
-  
+        
   avgDepth = 0.5 * avgDepth / 9.0;
 
   var minDepth: f32 = centerDepth - avgDepth;
@@ -121,15 +121,15 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   }
   
   if (texelDepth > ubo.far * .5) {
-    light.r = 1.;
+    return c;
   }
-  
+    
   c = blur / f32(runs * runs);
   if (ubo.debug > 0.) {
     c = vec4<f32>(c.rgb * factor, 1.);
   }
 
-  return vec4<f32> (c.rgb * max(0.2, light.r), 1.0);
+  return vec4<f32> (c.rgb * max(0.3, light.r), 1.0);
 }
 `;
 
