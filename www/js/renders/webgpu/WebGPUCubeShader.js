@@ -37,7 +37,6 @@ export class WebGPUCubeShader extends BaseCubeShader {
                     {
                         format: this.context.format,
                     },
-
                 ],
             },
             primitive: {
@@ -47,7 +46,7 @@ export class WebGPUCubeShader extends BaseCubeShader {
             depthStencil: {
                 depthWriteEnabled: false,
                 depthCompare: 'less',
-                format: 'depth24plus',
+                format: 'depth32float',
             }
         });
 

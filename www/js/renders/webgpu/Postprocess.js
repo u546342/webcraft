@@ -58,8 +58,9 @@ fn main_vert([[builtin(vertex_index)]] v_index : u32) -> VertexOutput{
 
 [[group(0), binding(0)]] var u_depth: texture_depth_2d;
 [[group(0), binding(1)]] var u_color: texture_2d<f32>;
-[[group(0), binding(2)]] var u_sampler: sampler;
-[[group(0), binding(3)]] var<uniform> ubo: Uniform;
+[[group(0), binding(2)]] var u_light: texture_2d<f32>;
+[[group(0), binding(3)]] var u_sampler: sampler;
+[[group(0), binding(4)]] var<uniform> ubo: Uniform;
 
 fn getD(coord: vec2<f32>) -> f32 {
   let size = vec2<f32>(textureDimensions(u_depth, 0));
@@ -81,8 +82,8 @@ fn sampleNoise(coord: vec2<f32>, depth: f32, factor: f32) -> vec4<f32>
 
 [[stage(fragment)]]
 fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
-
   let size = vec2<f32>(textureDimensions(u_depth, 0));
+  var light = textureSample(u_light, u_sampler, coord);
   var texelDepth = getD(coord);
   
   var center = vec2<f32>(0.5);  
@@ -122,13 +123,15 @@ fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
   c = blur / f32(runs * runs);
   if (ubo.debug > 0.) {
     c = vec4<f32>(c.rgb * factor, 1.);
-  } 
-  
-  return vec4<f32> (c.rgb, 1.0);
+  }
+
+  return vec4<f32> (c.rgb * max(0.2, light.r), 1.0);
 }
 `;
 
-const BLIT = `
+const BLUR = `
+
+let STEP: i32 = 2;
 
 struct VertexOutput {
   [[builtin(position)]] pos : vec4<f32>;
@@ -153,15 +156,34 @@ fn main_vert([[builtin(vertex_index)]] v_index : u32) -> VertexOutput{
     return output;
 }
 
+var<private> GAUS: array<f32, 25>  = array<f32, 25>(    
+    0.003765,	0.015019,	0.023792,	0.015019,	0.003765,
+    0.015019,	0.059912,	0.094907,	0.059912,	0.015019,
+    0.023792,	0.094907,	0.150342,	0.094907,	0.023792,
+    0.015019,	0.059912,	0.094907,	0.059912,	0.015019,
+    0.003765,	0.015019,	0.023792,	0.015019,	0.003765
+);
 
-[[group(0), binding(0)]] var u_color_blit: texture_2d<f32>;
+[[group(0), binding(0)]] var u_texture: texture_2d<f32>;
+[[group(0), binding(1)]] var u_sampler: sampler;
 
 [[stage(fragment)]]
-fn blit_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
-  let size = textureDimensions(u_color_blit, 0);
-  let fp = vec2<i32>(coord.xy * vec2<f32>(size));
+fn main_frag([[location(0)]] coord : vec2<f32>) -> [[location(0)]] vec4<f32> {
+  let size = vec2<f32>(textureDimensions(u_texture, 0));
+  var c: vec4<f32>;
 
-  return textureLoad(u_color_blit, fp,0);
+  for(var i: i32 = -STEP; i <= STEP; i = i + 1) {
+    for(var j: i32 = -STEP; j <= STEP; j = j + 1) {
+       let idx: u32 = u32((j + STEP) + (i + STEP) * 5);
+       let w  = GAUS[idx];
+       var loc = coord + vec2<f32>(f32(i), f32(j)) / size;
+       c = c +  textureSample(u_texture, u_sampler, loc);// * w;
+    }
+  }
+
+  c = c / pow(f32(STEP * 2 + 1), 2.0);
+  
+  return c;
 }
 `
 export class Postprocess {
@@ -234,16 +256,16 @@ export class Postprocess {
         this.blitPipeline = device.createRenderPipeline({
             vertex: {
                 module: device.createShaderModule({
-                    code: BLIT
+                    code: BLUR
                 }),
                 entryPoint: 'main_vert'
             },
 
             fragment: {
                 module: device.createShaderModule({
-                    code: BLIT
+                    code: BLUR
                 }),
-                entryPoint: 'blit_frag',
+                entryPoint: 'main_frag',
                 targets: [
                     {
                         format: this.context.format
@@ -256,9 +278,11 @@ export class Postprocess {
             }
         });
 
+        this.blitResult = null;
+
     }
 
-    blit(commandEncoder, target) {
+    blur(commandEncoder, target) {
         const {
             device,
             size
@@ -303,6 +327,35 @@ export class Postprocess {
         } = this.context;
 
         
+        const blurPassDesc = {
+            colorAttachments: [
+                {
+                    view: target,
+                    loadValue: 'load',
+                    storeOp: 'store',
+                }
+            ],
+        };
+
+        for(let i = 0; i < 3; i ++) {
+            const binding = i === 0 
+                ? this.blitGroupPrepas 
+                : this.blitGroupSwap[(i - 1) % 2];
+
+            const target = this.blitResult[(i % 2)].createView();
+
+            blurPassDesc.colorAttachments[0].view = target;
+
+            const blurPass = commandEncoder.beginRenderPass(blurPassDesc);
+            
+            blurPass.setPipeline(this.blitPipeline);
+            //renderPass.setViewport(size.width - 200,0, 200, 200, 0, 1);
+            blurPass.setBindGroup(0, binding);
+            blurPass.draw(6);
+            blurPass.endPass();
+        }
+        
+        
         this.data.set([
             this.props.near,
             this.props.far,
@@ -341,7 +394,20 @@ export class Postprocess {
     }
 
     resize(w, h) {
-        const { device } = this.context;
+        const { device, size, format } = this.context;
+        
+        this.blitResult = [
+                device.createTexture({
+                    size: size,
+                    format: format,
+                    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+                }),
+                device.createTexture({
+                    size: size,
+                    format: format,
+                    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+                })
+            ];
 
         this.group = device.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(0),
@@ -356,10 +422,14 @@ export class Postprocess {
                 },
                 {
                     binding: 2,
-                    resource: device.createSampler()
+                    resource: this.blitResult[0].createView()
                 },
                 {
                     binding: 3,
+                    resource: device.createSampler()
+                },
+                {
+                    binding: 4,
                     resource: {
                         buffer: this.ubo
                     }
@@ -368,14 +438,48 @@ export class Postprocess {
         });
 
 
-        this.blitGroup = device.createBindGroup({
+        this.blitGroupPrepas = device.createBindGroup({
             layout: this.blitPipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
-                    resource: this.context.main.createView()
+                    resource: this.context.lightMask.createView()
+                },
+                {
+                    binding: 1,
+                    resource: device.createSampler()
                 },
             ]
         });
+
+        this.blitGroupSwap = [
+            device.createBindGroup({
+                layout: this.blitPipeline.getBindGroupLayout(0),
+                entries: [
+                    {
+                        binding: 0,
+                        resource: this.blitResult[0].createView()
+                    },
+                    {
+                        binding: 1,
+                        resource: device.createSampler()
+                    },
+                ]
+            }),
+            device.createBindGroup({
+                layout: this.blitPipeline.getBindGroupLayout(0),
+                entries: [
+                    {
+                        binding: 0,
+                        resource: this.blitResult[1].createView()
+                    },
+                    {
+                        binding: 1,
+                        resource: device.createSampler()
+                    },
+                ]
+            })
+        ];
+
     }
 }

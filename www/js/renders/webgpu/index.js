@@ -44,6 +44,12 @@ export default class WebGPURenderer extends BaseRenderer{
 
         /**
          *
+         * @type {GPURenderPassEncoder}
+         */
+        this.lightPassEncoder = null;
+
+        /**
+         *
          * @type {GPUTexture}
          */
         this.depth = null;
@@ -59,6 +65,15 @@ export default class WebGPURenderer extends BaseRenderer{
          * @type {Postprocess}
          */
         this.postProcess = null;
+
+        /**
+         *
+         * @type {GPUTexture}
+         */
+        this.lightMask = null;
+
+
+        this.renderPasses = [];
     }
 
     get currentBackTexture() {
@@ -95,17 +110,18 @@ export default class WebGPURenderer extends BaseRenderer{
                     view: this.currentBackTexture,
                     loadValue: fogColor,
                     storeOp: 'store',
-                }
+                },
             ],
             depthStencilAttachment: {
                 view: this.depth.createView(),
 
-                depthLoadValue: 1.0,
+                depthLoadValue: 1,
                 depthStoreOp: 'store',
                 stencilLoadValue: 0,
                 stencilStoreOp: 'store',
             },
         });
+        
     }
 
     /**
@@ -113,41 +129,54 @@ export default class WebGPURenderer extends BaseRenderer{
      * @param geom
      * @param {WebGPUMaterial} material
      */
-    drawMesh(geom, material, a_pos = null, modelMatrix = null) {
+    drawMesh(geom, material, a_pos = null, modelMatrix = null, lightPass = false) {
         if (geom.size === 0) {
             return;
         }
 
         geom.bind(material.shader);
 
-        if (a_pos) {
+        if (a_pos || lightPass) {
             material = material.getSubMat();
             this.subMats.push(material);
         }
 
-
+        material.lightPass = lightPass;
         material.updatePos(a_pos, modelMatrix);
         material.bind(this);
 
-        this.passEncoder.setPipeline(material.pipeline);
+        const pass = lightPass ? this.lightPassEncoder : this.passEncoder;
+
+        if (lightPass) {            
+            pass.setPipeline(material.lightPassPipeline);
+        } else {
+            pass.setPipeline(material.pipeline);
+        }
 
         geom.buffers.forEach((e, i) => {
             e.bind();
             if (e.index) {
-                this.passEncoder.setIndexBuffer(e.buffer, 'uint16');
+                pass.setIndexBuffer(e.buffer, 'uint16');
                 return;
             }
 
-            this.passEncoder.setVertexBuffer(i, e.buffer);
+            pass.setVertexBuffer(i, e.buffer);
         })
 
-
-        this.passEncoder.setBindGroup(0, material.group);
+        pass.setBindGroup(0, material.group);
 
         if(material.skinGroup)
-            this.passEncoder.setBindGroup(1, material.skinGroup);
+            pass.setBindGroup(1, material.skinGroup);
 
-        this.passEncoder.draw(6, geom.size, 0, 0);
+        pass.draw(6, geom.size, 0, 0);
+
+        material.lightPass = false;
+
+        if (!lightPass) {
+            this.renderPasses.push({
+                geom, material, a_pos, modelMatrix  
+            });
+        }
     }
 
     drawCube(cube) {
@@ -163,8 +192,38 @@ export default class WebGPURenderer extends BaseRenderer{
         this.passEncoder.drawIndexed(36);
     }
 
+    lightPass() {
+        this.lightPassEncoder = this.encoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: this.lightMask.createView(),
+                    loadValue: [0,0,0,0],
+                    storeOp: 'store',
+                },
+            ],
+            depthStencilAttachment: {
+                view: this.depth.createView(),
+
+                depthLoadValue: 'load',
+                depthStoreOp: 'store',
+                stencilLoadValue: 0,
+                stencilStoreOp: 'store',
+            },
+        });
+        
+        this.renderPasses.forEach(e => this.drawMesh(
+            e.geom, e.material, e.a_pos, e.modelMatrix, true
+        ));
+
+        this.renderPasses = [];
+
+        this.lightPassEncoder.endPass();
+    }
+    
     endFrame() {
         this.passEncoder.endPass();
+
+        this.lightPass();
 
         if (this.postProcess) {
             this.postProcess.run(this.encoder, this.context.getCurrentTexture().createView());
@@ -217,11 +276,17 @@ export default class WebGPURenderer extends BaseRenderer{
 
         this.depth = this.device.createTexture({
             size: this.size,
-            format: 'depth24plus',
+            format: 'depth32float',
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
         });
 
         this.main = this.device.createTexture({
+            size: this.size,
+            format: this.format,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        });
+
+        this.lightMask = this.device.createTexture({
             size: this.size,
             format: this.format,
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,

@@ -1,6 +1,6 @@
 import {BaseTerrainShader} from "../BaseRenderer.js";
 
-export class WebGPUTerrainShader extends BaseTerrainShader{
+export class WebGPUTerrainShader extends BaseTerrainShader {
     /**
      *
      * @param {WebGPURenderer} context
@@ -15,8 +15,10 @@ export class WebGPUTerrainShader extends BaseTerrainShader{
          */
         this.description = null;
         this.vertexData = new Float32Array((16 + 16 + 1 + 1 + 1));
-        this.positionData = new Float32Array((16 + 3 + 1));
+        this.positionData = new Float32Array((16 + 3 + 1 + 1));
         this.fragmentData = new Float32Array((4 + 4 + 1 + 1 + 1));
+
+        this.lightPass = 0;
 
         this._init();
     }
@@ -157,6 +159,9 @@ export class WebGPUTerrainShader extends BaseTerrainShader{
         // add_pos
         this.positionData.set(this.addPos, 16);
 
+        this.positionData.set([this.lightPass ? 1 : 0], 16 + 3 + 1);
+
+
         //fragment data UBO
 
         // fog color
@@ -165,6 +170,7 @@ export class WebGPUTerrainShader extends BaseTerrainShader{
         this.fragmentData.set(this.fogAddColor, 4);
         this.fragmentData.set([this.chunkBlockDist], 8);
         this.fragmentData.set([this.blockSize], 9);
+
         // opaqueThreshold
         //this.fragmentData.set([this.opaqueThreshold], 10);
 

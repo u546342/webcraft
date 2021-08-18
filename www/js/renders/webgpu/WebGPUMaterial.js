@@ -34,6 +34,7 @@ export class WebGPUMaterial extends BaseMaterial {
         this.vertexUbo = null;
         this.positionUbo = null;
         this.fragmentUbo = null;
+        this.lightPass = false;
 
         this.lastState = {
             shader: null,
@@ -74,6 +75,10 @@ export class WebGPUMaterial extends BaseMaterial {
 
     get pipeline() {
         return this.parent ? this.parent.pipeline : this._pipeline;
+    }
+
+    get lightPassPipeline() {
+        return this.parent ? this.parent._lightPassPipeline : this._lightPassPipeline;
     }
 
     /**
@@ -131,9 +136,46 @@ export class WebGPUMaterial extends BaseMaterial {
             depthStencil: {
                 depthWriteEnabled: true,
                 depthCompare: 'less',
-                format: 'depth24plus',
+                format: 'depth32float',
             }
         });
+
+        this._lightPassPipeline = device.createRenderPipeline({
+                vertex: {
+                    ...base.vertex,
+                },
+                fragment: {
+                    ...base.fragment,
+                    targets: [
+                        {
+                            format: this.context.format,
+                            blend: {
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one',
+                                    operation: 'add'
+                                },
+                                color: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one',
+                                    operation: 'add'
+                                },
+                            },
+                        },
+                    ],
+                },
+                primitive: {
+                    ...base.primitive,
+                    cullMode:  'back'
+                },
+                // Enable depth testing so that the fragment closest to the camera
+                // is rendered in front.
+                depthStencil: {
+                    depthWriteEnabled: false,
+                    depthCompare: 'less',
+                    format: 'depth32float',
+                }
+            });
 
         this.vertexUbo = device.createBuffer({
             size: vertexData.byteLength,
@@ -239,7 +281,9 @@ export class WebGPUMaterial extends BaseMaterial {
 
         const texture = this.texture || this.shader.texture;
         const data = this.positionData || this.shader.positionData;
+
         data[16 + 3] = texture.anisotropy;
+        data[16 + 4] = this.lightPass ? 1 : 0;
 
         if (!data) {
             return;

@@ -1,7 +1,12 @@
+struct GBufferOutput {
+  [[location(0)]] color : vec4<f32>;
+};
+
 [[block]] struct VExtendUniform {
     ModelMatrix : mat4x4<f32>;
     add_pos : vec3<f32>;
     mipmap: f32;
+    lightPass: f32;
 };
 
 [[block]] struct VUniforms {
@@ -53,6 +58,7 @@ struct VertexOutput {
     [[location(3)]] color : vec4<f32>;
     [[location(4)]] normal : vec3<f32>;
     [[location(5)]] light : f32;
+    [[location(6)]] illum : f32;
 };
 
 [[group(0), binding(0)]] var<uniform> u : VUniforms;
@@ -85,9 +91,17 @@ fn main_vert(a : Attrs) -> VertexOutput {
         v.normal = normalize(cross(a.axisX, a.axisY));
     }
 
-    v.normal = vec3<f32>(v.normal.x, v.normal.z, v.normal.y);
+    var isLightPass = flagLight * eu.lightPass;
+    var scale = mix(1., 4., isLightPass);
+    
+    if (isLightPass > 0.0) {
+        v.illum = 1.0;
+    }
 
-    var pos : vec3<f32> = a.position + (a.axisX * a.quad.x) + (a.axisY * a.quad.y);
+    var pos : vec3<f32> = a.position + (a.axisX * a.quad.x) * scale + (a.axisY * a.quad.y) * scale;
+    pos = pos + isLightPass * v.normal * 0.04;
+
+    v.normal = vec3<f32>(v.normal.x, v.normal.z, v.normal.y);
     v.texcoord = a.uvCenter + (a.uvSize * a.quad);
     v.texClamp = vec4<f32>(a.uvCenter - abs(a.uvSize * 0.5) + u.pixelSize * 0.5, a.uvCenter + abs(a.uvSize * 0.5) - u.pixelSize * 0.5);
 
@@ -95,24 +109,21 @@ fn main_vert(a : Attrs) -> VertexOutput {
     var n : vec3<f32> = normalize(v.normal);
     v.light = max(.5, dot(n, sun_dir) - v.color.a);
 
-    if (flagLight > 0.0) {
-        v.light = 1.0;
-    }
-
     if(u.fogOn > 0.0) {
         if (flagBiome < 0.5) {
             v.color.r = -1.0;
         }
     }
+
     // 1. Pass the view position to the fragment shader
-    v.position = (u.worldView * (eu.ModelMatrix * vec4<f32>(pos, 1.0) + vec4<f32>(eu.add_pos, 0.0))).xyz;
-    v.VPos = u.ProjMatrix * vec4<f32>(v.position, 1.0);
+    v.position = (u.worldView * ( eu.ModelMatrix * vec4<f32>(pos, 1.0) + vec4<f32>(eu.add_pos, 0.0))).xyz;
+    v.VPos = u.ProjMatrix  * vec4<f32>(v.position, 1.0);
 
     return v;
 }
 
 [[stage(fragment)]]
-fn main_frag(v : VertexOutput) -> [[location(0)]] vec4<f32>{
+fn main_frag(v : VertexOutput) -> GBufferOutput {
     var outColor: vec4<f32>;
     var texCoord : vec2<f32> = clamp(v.texcoord, v.texClamp.xy, v.texClamp.zw);
     var texc : vec2<f32> = vec2<f32>(texCoord.x, texCoord.y);
@@ -121,7 +132,13 @@ fn main_frag(v : VertexOutput) -> [[location(0)]] vec4<f32>{
     var mipOffset : vec2<f32> = vec2<f32>(0.0);
     var biome : vec2<f32> = v.color.rg;
 
-    if (eu.mipmap > 0.0) {
+    var isNotLighPass = (1. - v.illum);
+
+    if (isNotLighPass > 0.1 && eu.lightPass > 0.1) {
+        discard;
+    }
+
+    if (eu.mipmap * isNotLighPass> 0.0) {
         biome = biome * 0.5;
 
         // manual implementation of EXT_shader_texture_lod
@@ -139,7 +156,7 @@ fn main_frag(v : VertexOutput) -> [[location(0)]] vec4<f32>{
     }
 
     // Game
-    if(u.fogOn > 0.0) {
+    if(u.fogOn * isNotLighPass > 0.1) {
         // Read texture
         var color : vec4<f32> = textureSample(u_texture, u_sampler, texc * mipScale + mipOffset);
 
@@ -192,14 +209,22 @@ fn main_frag(v : VertexOutput) -> [[location(0)]] vec4<f32>{
         );
 
     } else {
-        outColor = textureSample(u_texture, u_sampler, texc);
 
-        if(outColor.a < 0.1) {
-            discard;
+        if (isNotLighPass > 0.1) {
+            outColor = textureSample(u_texture, u_sampler, texc);
+
+            if(outColor.a < 0.1) {
+                discard;
+            }
+            
+            outColor = outColor * v.color;
+        } else {
+            var norm = (texc - v.texClamp.xy) / (v.texClamp.zw - v.texClamp.xy);
+            var lerp = 1. - length(vec2<f32>(0.5) - norm) * 2.0;
+
+            outColor = vec4<f32>(lerp);
         }
-
-        outColor = outColor * v.color;
     }
 
-    return outColor;
+    return GBufferOutput(outColor);
 }
