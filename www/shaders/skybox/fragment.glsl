@@ -5,7 +5,7 @@ const float PI = 3.14;
 const float outerRadius = .65, innerRadius = .4, intensity = .1;
 const vec3 vignetteColor = vec3(0.0, 0.0, 0.0); //red
 const vec3 sunColor = vec3(1., 0.93, 0.59);
-const vec3 moonColor = vec3(0.22);
+const vec3 moonColor = vec3(0.41);
 
 //
 uniform samplerCube u_texture;

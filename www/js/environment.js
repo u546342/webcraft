@@ -17,8 +17,8 @@ const ENV_GRAD_COLORS = Object.entries({
     [35]: 0x250a07,
     [46]: 0x963b25,
     [55]: 0xe3ad59,
-    [65]: 0x13c5e9,
-    [100]: 0x00d4ff,
+    [65]: 0x76c2ff, // as fog
+    [100]: 0x76c2ff, // as fog
 })
 .map(([key, color]) => ({
         pos: +key / 100,
