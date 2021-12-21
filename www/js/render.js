@@ -4,16 +4,13 @@ import {Vector} from "./helpers.js";
 import {CHUNK_SIZE_X} from "./chunk.js";
 import rendererProvider from "./renders/rendererProvider.js";
 import {Mth} from "./helpers.js";
-import {Vox_Loader} from "./vox/loader.js";
-import {Vox_Mesh} from "./vox/mesh.js";
 import {FrustumProxy} from "./frustum.js";
-import {Resources} from "./resources.js";
 import {BLOCK} from "./blocks.js";
 import Particles_Block_Destroy from "./particles/block_destroy.js";
 import Particles_Raindrop from "./particles/raindrop.js";
-import Particles_Sun from "./particles/sun.js";
 import Particles_Clouds from "./particles/clouds.js";
 import {MeshManager} from "./mesh_manager.js";
+import {Environment} from "./environment.js";
 
 const {mat4} = glMatrix;
 
@@ -64,6 +61,7 @@ export class Renderer {
         this.prevCamRotate      = new Vector(0, 0, 0);
         this.camMoved           = false;
         this.frame              = 0;
+        this.env                = new Environment();
         this.renderBackend = rendererProvider.getRenderer(
             this.canvas,
             BACKEND, {
@@ -131,9 +129,9 @@ export class Renderer {
 
         this.setPerspective(FOV_NORMAL, NEAR_DISTANCE, RENDER_DISTANCE);
 
-        if (renderBackend) {
-            // SkyBox
-            this.initSky();
+        if (renderBackend) 
+        {
+            this.env.init(this);
         }
 
         // HUD
@@ -149,24 +147,6 @@ export class Renderer {
         callback();
     }
 
-    initSky() {
-        return this.skyBox = this.renderBackend.createCubeMap({
-            code: Resources.codeSky,
-            uniforms: {
-                u_brightness: 1.0,
-                u_textureOn: true
-            },
-            sides: [
-                Resources.sky.posx,
-                Resources.sky.negx,
-                Resources.sky.posy,
-                Resources.sky.negy,
-                Resources.sky.posz,
-                Resources.sky.negz
-            ]
-        });
-    }
-
     // Makes the renderer start tracking a new world and set up the chunk structure.
     // world - The world object to operate on.
     // chunkSize - X, Y and Z dimensions of each chunk, doesn't have to fit exactly inside the world.
@@ -180,19 +160,12 @@ export class Renderer {
 
     // setBrightness...
     setBrightness(value) {
-        this.brightness = value;
-        let mult = Math.min(1, value * 2)
-        currentRenderState.fogColor = [
-            settings.fogColor[0] * (value * mult),
-            settings.fogColor[1] * (value * mult),
-            settings.fogColor[2] * (value * mult),
-            settings.fogColor[3]
-        ];
+        this.env.setBrightness(value);
     }
 
     // toggleNight...
     toggleNight() {
-        if(this.brightness == 1) {
+        if(this.env.brightness == 1) {
             this.setBrightness(0);
         } else {
             this.setBrightness(1);
@@ -202,35 +175,38 @@ export class Renderer {
     // Render one frame of the world to the canvas.
     draw(delta) {
         this.frame++;
-        const { gl, shader, renderBackend } = this;
+        const { gl, shader, renderBackend, player } = this;
+        const { width, height } = renderBackend.size;
+
         renderBackend.stat.drawcalls = 0;
         renderBackend.stat.drawquads = 0;
-        let player = this.player;
-        currentRenderState.fogDensity   = settings.fogDensity;
-        currentRenderState.fogAddColor  = settings.fogAddColor;
+
+        const blockDist = 
+            player.eyes_in_water 
+                ? 8 
+                : player.state.chunk_render_dist * CHUNK_SIZE_X - CHUNK_SIZE_X * 2;
+
+        this.env.setEnvState({
+            underwater: player.eyes_in_water,
+            chunkBlockDist: blockDist,
+        });
+
+        this.env.computeFogRelativeSun();
+
         this.updateViewport();
-        let fogColor = player.eyes_in_water ? settings.fogUnderWaterColor : currentRenderState.fogColor;
-        renderBackend.beginFrame(fogColor);
-        //
-        const {
-            width, height
-        } = renderBackend.size;
+
+        renderBackend.beginFrame(this.env.fogColorBrigtness);
+        
         //
         if (renderBackend.gl) {
             mat4.perspectiveNO(this.projMatrix, this.fov * Math.PI/180.0, width / height, this.min, this.max);
         } else {
             mat4.perspectiveZO(this.projMatrix, this.fov * Math.PI/180.0, width / height, this.min, this.max);
         }
-        // 1. Draw skybox
-        if(this.skyBox) {
-            if(this.skyBox.shader.uniforms) {
-                this.skyBox.shader.uniforms.u_textureOn.value = this.brightness == 1 && !player.eyes_in_water;
-                this.skyBox.shader.uniforms.u_brightness.value = this.brightness;
-            } else {
-                this.skyBox.shader.brightness = this.brightness;
-            }
-            this.skyBox.draw(this.viewMatrix, this.projMatrix, width, height);
-        }
+
+        this.env.sync(this);
+        this.env.draw(this);
+
         // Clouds
         if(!this.clouds) {
             let pos = new Vector(player.pos);
@@ -242,28 +218,6 @@ export class Renderer {
             this.world.chunkManager.rendered_chunks.fact = 0;
             this.world.chunkManager.prepareRenderList(this);
         }
-
-        //updating global uniforms
-        let gu                  = this.globalUniforms;
-        // In water
-        if(player.eyes_in_water) {
-            gu.fogColor         = fogColor;
-            gu.chunkBlockDist   = 8;
-            gu.fogAddColor      = settings.fogUnderWaterAddColor;
-            gu.brightness       = this.brightness;
-        } else {
-            gu.fogColor         = fogColor;
-            gu.chunkBlockDist   = player.state.chunk_render_dist * CHUNK_SIZE_X - CHUNK_SIZE_X * 2;
-            gu.fogAddColor      = currentRenderState.fogAddColor;
-            gu.brightness       = this.brightness;
-        }
-        //
-        gu.time                 = performance.now();
-        gu.fogDensity           = currentRenderState.fogDensity;
-        gu.resolution           = [width, height];
-        gu.testLightOn          = this.testLightOn;
-        gu.sunDir               = this.sunDir;
-        gu.update();
 
         this.defaultShader.texture = BLOCK.resource_pack_manager.get('default').textures.get('default').texture;
         this.defaultShader.bind(true);
