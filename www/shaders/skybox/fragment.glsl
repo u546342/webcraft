@@ -103,7 +103,7 @@ vec4 stars (vec3 w) {
     f *= m;
     f *= 2.;
 
-    return vec4(vec3(f), 1.);
+    return vec4(f);
 }
 
 void drawCrosshair() {
@@ -160,6 +160,7 @@ void main() {
     float moodGlow = circle(norm, moonPos, 0.05, 0.7) * 0.15;
  
     overlay += vec4(moonColor, moonDisk * fogFade2);
+    overlay += stars(v_texCoord) * (1. - u_brightness) * fogFade2;
 
     vec4 color = textureCube(u_texture, norm);
 
@@ -169,7 +170,7 @@ void main() {
     // apply overlay
     out_color = mix(out_color, vec4(overlay.rgb * 0.5, 1.), overlay.a);
 
-    gl_FragColor = stars(v_texCoord);// out_color;
+    gl_FragColor = out_color;
 
     drawCrosshair();
 
