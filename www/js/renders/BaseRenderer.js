@@ -99,7 +99,7 @@ export class BaseTexture {
         this.context._textures = this.context._textures.filter((e) => e !== this);
     }
 
-    bind() {
+    bind(...args) {
 
     }
 
@@ -152,7 +152,7 @@ export class BaseTexture3D {
         }
     }
 
-    bind() {
+    bind(...args) {
     }
 
     isSimilar() {
@@ -194,6 +194,11 @@ export class BaseMaterial {
 }
 
 export class BaseShader {
+    /**
+     * 
+     * @param {BaseRenderer} context 
+     * @param {*} options 
+     */
     constructor(context, options) {
         this.context = context;
         this.options = options;
@@ -433,7 +438,7 @@ export default class BaseRenderer {
     }
 
     async init() {
-
+        return this;
     }
 
     /**

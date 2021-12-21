@@ -92,7 +92,6 @@ export class Renderer {
         const {renderBackend} = this;
         await renderBackend.init();
 
-        this.skyBox             = null;
         this.videoCardInfoCache = null;
         this.options            = {FOV_NORMAL, FOV_WIDE, FOV_ZOOM, ZOOM_FACTOR, FOV_CHANGE_SPEED, NEAR_DISTANCE, RENDER_DISTANCE};
 

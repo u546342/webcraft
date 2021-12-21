@@ -12,64 +12,59 @@ const SETTINGS = {
     chunkBlockDist:         8,
 };
 
-const ENV_GRAD_COLORS = {
+const ENV_GRAD_COLORS = Object.entries({
     [0]: 0x000000,
-    [25]: 0x250a07,
-    [36]: 0x963b25,
-    [45]: 0xe3ad59,
-    [55]: 0x13c5e9,
+    [35]: 0x250a07,
+    [46]: 0x963b25,
+    [55]: 0xe3ad59,
+    [65]: 0x13c5e9,
     [100]: 0x00d4ff,
-}
+})
+.map(([key, color]) => ({
+        pos: +key / 100,
+        value: [
+            (color >> 16 & 0xff) / 0xff,
+            (color >> 8 & 0xff) / 0xff,
+            (color & 0xff) / 0xff
+        ]
+    })
+);
 
 function luminance (color) {
-    const r = (color << 16 & 0xff) / 0xff;
-    const g = (color << 8 & 0xff) / 0xff;
-    const b = (color & 0xff) / 0xff;
+    const r = color[0]
+    const g = color[1];
+    const b = color[2];
 
     return  Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b );
 }
 
-function interpolateColor (a = 0, b = 0, factor = 0) {
-    factor = Math.min(1, Math.max(0, factor));
+function interpolateColor (a, b, factor = 0, target = []) {
+    target[0] = a[0] * (1 - factor) + b[0] * factor;
+    target[1] = a[1] * (1 - factor) + b[1] * factor;
+    target[2] = a[2] * (1 - factor) + b[2] * factor;
 
-    const ar = (a >> 16 & 0xff);
-    const ag = (a >> 8 & 0xff);
-    const ab = (a >> 0 & 0xff);
-
-    const br = (b >> 16 & 0xff);
-    const bg = (b >> 8 & 0xff);
-    const bb = (b >> 0 & 0xff);
-    
-    return (
-        (ar * (1 - factor) + br * factor) << 16 |
-        (ag * (1 - factor) + bg * factor) << 8 |
-        (ab * (1 - factor) + bb * factor) << 0
-    );
+    return target;
 }
 
-function interpolateGrad (pattern, factor = 0) {
-    const int = Math.min (100, Math.max(0,  (factor * 100) | 0));
+function interpolateGrad (pattern, factor = 0,target = []) {
+    factor = Math.max(0, Math.min(1, factor));
 
-    if (int in pattern) {
-        return pattern[int];
-    }
+    let rightKey = pattern[0];
+    let leftKey = pattern[0];
 
-    let rightKey = 0;
-    let leftKey = 0;
+    for(const entry of pattern) {
+        rightKey = entry;
 
-    for(const k in pattern) {
-        rightKey = +k;
-
-        if (rightKey >= int) {
+        if (rightKey.pos >= factor) {
             break;
         }
 
-        leftKey = +k;
+        leftKey = entry;
     }
 
-    const relative = (int - leftKey) / (rightKey - leftKey);
+    const relative = (factor - leftKey.pos) / (rightKey.pos - leftKey.pos);
 
-    return interpolateColor(pattern[leftKey], pattern[rightKey], relative);
+    return interpolateColor(leftKey.value, rightKey.value, relative, target);
 }
 
 export class Environment {
@@ -103,28 +98,6 @@ export class Environment {
 
         this.skyBox = renderBackend.createCubeMap({
             code: Resources.codeSky,
-            uniforms: {
-                u_brightness: 1.0,
-                u_textureOn: true
-            },
-            sides: [
-                Resources.sky.posx,
-                Resources.sky.negx,
-                Resources.sky.posy,
-                Resources.sky.negy,
-                Resources.sky.posz,
-                Resources.sky.negz
-            ]
-        });
-    }
-
-    initSky() {
-        return this.skyBox = this.renderBackend.createCubeMap({
-            code: Resources.codeSky,
-            uniforms: {
-                u_brightness: 1.0,
-                u_textureOn: true
-            },
             sides: [
                 Resources.sky.posx,
                 Resources.sky.negx,
@@ -158,17 +131,13 @@ export class Environment {
         const dir = [sun[0] / len, sun[1] / len, sun[2] / len];
 
         // up vector only is Y
-        const factor = Math.max(0, dir[1]);
-        const color = interpolateGrad(ENV_GRAD_COLORS, factor);
+        const factor = 0.5 * (1. + dir[1]);
+        const color = interpolateGrad(ENV_GRAD_COLORS, factor, this.fogColor);
 
-        this.fogColor = [
-            ((color >> 16) & 0xff) / 0xff,
-            ((color >> 8) & 0xff) / 0xff,
-            ((color >> 0) & 0xff) / 0xff,
-            1
-        ];
+        this.fogColor[3] = 1;
 
-        const lum = luminance(color) / luminance(ENV_GRAD_COLORS[100]);
+        const lum = luminance(color) / luminance(ENV_GRAD_COLORS[ENV_GRAD_COLORS.length - 1].value);
+
         this.fogColorBrigtness = this.fogColor;
         this.brightness = lum * lum;
     }
@@ -223,12 +192,6 @@ export class Environment {
  
         const { width, height }  = render.renderBackend;
 
-        if(this.skyBox.shader.uniforms) {
-            this.skyBox.shader.uniforms.u_textureOn.value = this.brightness == 1 && !this.underwater;
-            this.skyBox.shader.uniforms.u_brightness.value = this.brightness;
-        } else {
-            this.skyBox.shader.brightness = this.brightness;
-        }
         this.skyBox.draw(render.viewMatrix, render.projMatrix, width, height);
     }
 }

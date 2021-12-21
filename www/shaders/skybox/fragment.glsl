@@ -1,14 +1,20 @@
 precision highp float;
 
+const float PI = 3.14;
 // vignetting
 const float outerRadius = .65, innerRadius = .4, intensity = .1;
 const vec3 vignetteColor = vec3(0.0, 0.0, 0.0); //red
+const vec3 sunColor = vec3(1., 0.93, 0.59);
+const vec3 moonColor = vec3(0.66, 0.66, 0.65);
 
 //
 uniform samplerCube u_texture;
 uniform float u_brightness;
+uniform float u_time;
 uniform vec2 u_resolution;
 uniform bool u_textureOn;
+uniform vec4 u_fog;
+uniform vec3 u_sunDir;
 
 varying vec3 v_texCoord;
 varying vec4 crosshair;
@@ -39,19 +45,34 @@ void drawVignetting() {
     gl_FragColor.rgb = mix(gl_FragColor.rgb, vignetteColor, vignetteOpacity);
 }
 
+float circle(vec3 w, vec3 d, float s, float f) {
+    float dist = distance(w, d) - s;
+
+    return smoothstep(f, 1., 1. - dist);
+}
+
 void main() {
-    if(u_textureOn) {
-        vec4 color = textureCube(u_texture, v_texCoord);
-        gl_FragColor = vec4(color.rgb * u_brightness, color.a);
-    }
-    // Draw crosshair
+    vec4 out_color;
+    vec3 norm = normalize(v_texCoord);
+    vec3 sun = normalize(u_sunDir);
+
+    float fogFade = smoothstep(0., 0.5, max(0., norm.y));
+    float b = pow(u_brightness,  1. / 3.);
+
+    //if(u_textureOn) {
+    vec4 color = textureCube(u_texture, norm);
+    out_color =  mix(u_fog, vec4(color.rgb * b, color.a), fogFade);
+
+    //sun
+    out_color = mix(out_color,  1.2 * vec4(sunColor, 1.), circle(norm, sun, 0.05, 0.95) * pow(fogFade, 1./ 2.));
+    
+    //moon
+    vec3 moonPos = normalize(vec3(sun.z, -sun.y, -2.));
+    out_color = mix(out_color,  vec4(moonColor, 1.), circle(norm, moonPos, 0.02, 0.99) * pow(fogFade, 1./ 2.));
+
+    gl_FragColor = out_color;
+
     drawCrosshair();
-
-    // gamma
-    // gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(0.7));
-
-    // contrast
-    // gl_FragColor.rgb = gl_FragColor.rgb * 0.25 + 0.75* gl_FragColor.rgb * gl_FragColor.rgb *(3.0-2.0* gl_FragColor.rgb);
 
     // vignetting
     drawVignetting();

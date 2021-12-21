@@ -30,13 +30,18 @@ export class WebGLCubeShader extends BaseCubeShader {
             this.program = ret.program;
         });
         //
+        this.u_time = gl.getUniformLocation(this.program, 'u_time');
+        this.u_sunDir = gl.getUniformLocation(this.program, 'u_sunDir');
+        this.u_fog = gl.getUniformLocation(this.program, 'u_fog');
+
         this.u_texture =  gl.getUniformLocation(this.program, 'u_texture');
         this.u_lookAtMatrix = gl.getUniformLocation(this.program, 'u_lookAtMatrix');
         this.u_projectionMatrix = gl.getUniformLocation(this.program, 'u_projectionMatrix');
-        // this.u_brightness = gl.getUniformLocation(this.program, 'u_brightness');
+        this.u_brightness = gl.getUniformLocation(this.program, 'u_brightness');
         this.u_resolution = gl.getUniformLocation(this.program, 'u_resolution');
         this.u_TestLightOn = gl.getUniformLocation(this.program, 'u_TestLightOn');
         this.a_vertex = gl.getAttribLocation(this.program, 'a_vertex');
+        
         // Make custom uniforms
         if(options && 'uniforms' in options) {
             this.makeUniforms(options.uniforms);
@@ -59,7 +64,7 @@ export class WebGLCubeShader extends BaseCubeShader {
                     func = 'uniform1f';
                     break;
                 }
-                case 'Vector': {
+                case 'object': {
                     type = 'vec3';
                     func = 'uniform3fv';
                     break;
@@ -98,11 +103,16 @@ export class WebGLCubeShader extends BaseCubeShader {
     bind() {
 
         this.texture.bind(0);
-        const { gl } = this.context;
+        const { gl, globalUniforms } = this.context;
 
         gl.useProgram(this.program);
 
-        // gl.uniform1f(this.u_brightness, this.brightness);
+        // globals
+        this.u_brightness && gl.uniform1f(this.u_brightness, globalUniforms.brightness);
+        this.u_fog && gl.uniform4fv(this.u_fog, globalUniforms.fogColor);
+        this.u_sunDir && gl.uniform3fv(this.u_sunDir, globalUniforms.sunDir);
+        this.u_time && gl.uniform1f(this.u_time, globalUniforms.time);
+
         gl.uniform2fv(this.u_resolution, this.resolution);
         gl.uniform1f(this.u_TestLightOn, this.testLightOn);
 
@@ -111,7 +121,7 @@ export class WebGLCubeShader extends BaseCubeShader {
         gl.uniformMatrix4fv(this.u_lookAtMatrix, false, this.lookAt);
         gl.uniformMatrix4fv(this.u_projectionMatrix, false, this.proj);
 
-        this.applyUniforms();
+        //this.applyUniforms();
 
     }
 
@@ -152,16 +162,19 @@ export class WebGLTexture extends BaseTexture {
 
     bind(location) {
         location = location || 0;
-        const {
-            gl
-        } = this.context;
+        
+        const { gl } = this.context;
+        
         gl.activeTexture(gl.TEXTURE0 + location);
+        
         if (this.dirty) {
             return this.upload();
         }
+        
         const {
             texture
         } = this;
+        
         gl.bindTexture(gl[TEXTURE_MODE[this.mode]] || gl.TEXTURE_2D, texture);
     }
 
@@ -243,13 +256,19 @@ export default class WebGLRenderer extends BaseRenderer {
     }
 
     async init() {
+        /**
+         * @type {WebGL2RenderingContext}
+         */
         const gl = this.gl = this.view.getContext('webgl2', this.options);
+
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
         this._emptyTex3D.bind(5)
-        return Promise.resolve(this);
+
+        return this;
     }
 
     resize(w, h) {
@@ -334,10 +353,11 @@ export default class WebGLRenderer extends BaseRenderer {
         this.stat.drawcalls++;
     }
 
-    beginFrame(fogColor) {
-        const {gl} = this;
+    beginFrame(fogColor = [0,0,0,0]) {
+        const { gl } = this;
+
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(...fogColor);
+        gl.clearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
