@@ -13,7 +13,7 @@ const SETTINGS = {
 };
 
 const ENV_GRAD_COLORS = Object.entries({
-    [0]: 0x000000,
+    [0]: 0x020202,
     [35]: 0x250a07,
     [46]: 0x963b25,
     [55]: 0xe3ad59,

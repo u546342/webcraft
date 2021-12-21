@@ -5,7 +5,7 @@ const float PI = 3.14;
 const float outerRadius = .65, innerRadius = .4, intensity = .1;
 const vec3 vignetteColor = vec3(0.0, 0.0, 0.0); //red
 const vec3 sunColor = vec3(1., 0.93, 0.59);
-const vec3 moonColor = vec3(0.66, 0.66, 0.65);
+const vec3 moonColor = vec3(0.22);
 
 //
 uniform samplerCube u_texture;
@@ -67,7 +67,7 @@ void main() {
     out_color = mix(out_color,  1.2 * vec4(sunColor, 1.), circle(norm, sun, 0.05, 0.95) * pow(fogFade, 1./ 2.));
     
     //moon
-    vec3 moonPos = normalize(vec3(sun.z, -sun.y, -2.));
+    vec3 moonPos = normalize(vec3(sun.z, -sun.y, 2.));
     out_color = mix(out_color,  vec4(moonColor, 1.), circle(norm, moonPos, 0.02, 0.99) * pow(fogFade, 1./ 2.));
 
     gl_FragColor = out_color;
