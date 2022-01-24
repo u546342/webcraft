@@ -33,7 +33,8 @@ const TEXTURE_FILTER_GL = {
 
 const TEXTURE_MODE = {
     '2d': 'TEXTURE_2D',
-    'cube': 'TEXTURE_CUBE_MAP'
+    'cube': 'TEXTURE_CUBE_MAP',
+    '3d': 'TEXTURE_3D',
 }
 
 export class WebGLCubeShader extends WebGLUniversalShader {
@@ -123,6 +124,12 @@ export class WebGLCubeGeometry extends BaseCubeGeometry {
 }
 
 export class WebGLTexture extends BaseTexture {
+    constructor (context, options) {
+        super(context, options);
+
+        this.activePassID = -1;
+    }
+
     _applyStyle() {
         const {
             gl
@@ -130,38 +137,53 @@ export class WebGLTexture extends BaseTexture {
 
         const type = gl[TEXTURE_MODE[this.mode]] || gl.TEXTURE_2D;
 
+        // texture can be not bound if location is same
+        // force it
+        let bounded = false;
+
         if (this.minFilter !== this._lastMinFilter) {
             this._lastMinFilter = this.minFilter;
+
+            gl.bindTexture(gl[TEXTURE_MODE[this.mode]], this.texture);
+
+            bounded = true;
+
             gl.texParameteri(type, gl.TEXTURE_MIN_FILTER, gl[TEXTURE_FILTER_GL[this.minFilter]] || gl.LINEAR);
         }
 
         if (this.magFilter !== this._lastMagFilter) {
             this._lastMagFilter = this.magFilter;
+
+            if (!bounded) {
+                gl.bindTexture(gl[TEXTURE_MODE[this.mode]], this.texture);
+            }
+
             gl.texParameteri(type, gl.TEXTURE_MAG_FILTER, gl[TEXTURE_FILTER_GL[this.magFilter]] || gl.LINEAR);
         }
     }
 
-    bind(location) {
-        location = location || 0;
-        const {
-            gl
-        } = this.context;
+    /**
+     * Bind texture to location
+     * @param {number} [location] location where it was bound
+     * @returns {number} actual slot id
+     */
+    bind(location = -1) {
+        /**
+         * @type {WebGLRenderer}
+         */
+        const context = this.context;
 
-        gl.activeTexture(gl.TEXTURE0 + location);
+        location = context.bindTextureToSlot(this, location);
 
         if (this.dirty) {
-            return this.upload();
+            this.upload();
+
+            return location;
         }
 
-        const {
-            texture
-        } = this;
-
-        const type = gl[TEXTURE_MODE[this.mode]] || gl.TEXTURE_2D;
-
-        gl.bindTexture(type, texture);
-
         this._applyStyle();
+
+        return location;
     }
 
     upload() {
@@ -230,15 +252,19 @@ export class WebGLTexture extends BaseTexture {
             return;
         }
 
-        super.destroy();
-
         // not destroy shared texture that used
         if(this.isUsed) {
             return;
         }
 
+        super.destroy();
+
+        this.context.freeTextureSlots(this);
+
         const  { gl } = this.context;
+
         gl.deleteTexture(this.texture);
+
         this.texture = null;
         this.source = null;
         this.width = this.height = 0;
@@ -255,7 +281,17 @@ export default class WebGLRenderer extends BaseRenderer {
          * @type {WebGL2RenderingContext}
          */
         this.gl = null;
-        this._activeTextures = {};
+
+        /**
+         * How many slots we can accupant as active textures
+         */
+        this.maxActiveTextures = 0;
+
+        /**
+         * id => Texture binding
+         * @type {Array<WebGLTexture>}}
+         */
+        this._activeTextures = [];
 
         /**
          * @type {IWebGLShader}
@@ -277,12 +313,22 @@ export default class WebGLRenderer extends BaseRenderer {
     async init(args) {
         super.init(args);
 
-        const gl = this.gl = this.view.getContext('webgl2', {...this.options, stencil: true});
+        /**
+         * @type {WebGL2RenderingContext}
+         */
+        const gl = this.view.getContext('webgl2', {...this.options, stencil: true});;
+
+        this.gl = gl;
+
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.CULL_FACE);
         gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
         this._emptyTex3D.bind(5)
+
+        this.maxActiveTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
         return Promise.resolve(this);
     }
 
@@ -310,6 +356,124 @@ export default class WebGLRenderer extends BaseRenderer {
             depth: true,
         });
         */
+    }
+
+    /**
+     * 
+     * @param {WebGLTexture} texture 
+     * @param {number} [slot]
+     * @returns {number} actual bounded slot
+     */
+    bindTextureToSlot(texture, slot) {
+        if (!texture) {
+            return -1;
+        }
+
+        const {
+            gl, _activeTextures
+        } = this;
+
+        let targetSlot = -1;
+        let activate = true;
+
+        // check that we can bind to queried slot
+        if (slot >= 0) {
+            const old = _activeTextures[slot];
+            
+            targetSlot = slot;
+
+            // we can bound texture to same slot
+            // not require to activate it
+            if (old == texture) {
+                activate = false;
+
+            } else if(old && old.activePassID === this.passID) {
+                
+                /*
+                console.warn(
+                    '[Texture error] Texture slot ' + slot + 
+                    ' has texture ' + texture.id + 
+                    ' with same frame ' + this.passID);
+                */
+                //return -1;
+            }
+
+        // select slot automaticly 
+        } else {
+            targetSlot = _activeTextures.indexOf(texture)
+
+            // our slot already activated to same texture
+            if (targetSlot >= 0) {
+                activate = false;
+
+            // there was not bounds before
+            } else {
+                // store to empty slot if exist
+                if (_activeTextures.length < this.maxActiveTextures) {
+                    targetSlot = _activeTextures.push(texture) - 1;
+                // find older texture on slots
+                } else {
+                    let id = Infinity;
+                    let slot = -1;
+
+                    for(let i = 0; i < _activeTextures.length; i++) {
+                        let t = _activeTextures[i];
+
+                        // empty slot
+                        // bind to it
+                        if (!t) {
+                            slot = i;
+                            break;
+                        }
+
+                        if (t.activePassID < id && t.activePassID < this.passID) {
+                            slot = i;
+                            id = t.activePassID;
+                        }
+                    }
+
+                    if (slot === -1) {
+                        throw new Error('[Texture error] Empty slots not exist for pass ' + this.passID)
+                        return - 1;
+                    }
+
+                    targetSlot = slot;
+                }
+            }
+        }
+
+        this._activeTextures[targetSlot] = texture;
+
+        texture.activePassID = this.passID;
+
+        if (activate) {
+            gl.activeTexture(gl.TEXTURE0 + targetSlot);
+            gl.bindTexture(gl[TEXTURE_MODE[texture.mode]] || gl.TEXTURE_2D, texture.texture);
+        }
+
+        return targetSlot;
+    }
+
+    /**
+     * Remove texture slot referencing
+     * @param {WebGLTexture} texture 
+     */
+    freeTextureSlots(texture) {
+        for(let i = 0; i < this._activeTextures.length; i ++) {
+            if (this._activeTextures[i] === texture) {
+                this._activeTextures[i] = null;
+            }
+        }
+
+        // shrink size
+        // pop while older slots is empty
+        while(this._activeTextures.length) {
+            if (this._activeTextures[this._activeTextures.length - 1]) {
+                break;
+            }
+
+            this._activeTextures.pop();
+        } 
     }
 
     clear({clearDepth = true, clearColor = true} = {}) 

@@ -18,19 +18,26 @@ const TYPES = {
 }
 
 export class WebGLTexture3D extends BaseTexture3D {
-    bind(location) {
-        location = location || 0;
-        const {
-            gl
-        } = this.context;
-        gl.activeTexture(gl.TEXTURE0 + location);
+    /**
+     * Bind texture to location
+     * @param {number} [location] location where it was bound
+     * @returns {number} actual slot id
+     */
+     bind(location = -1) {
+        /**
+         * @type {WebGLRenderer}
+         */
+        const context = this.context;
+
+        location = context.bindTextureToSlot(this, location);
+
         if (this.dirty) {
-            return this.upload();
+            this.upload();
+
+            return location;
         }
-        const {
-            texture
-        } = this;
-        gl.bindTexture(gl.TEXTURE_3D, texture);
+
+        return location;
     }
 
     upload() {
@@ -65,7 +72,11 @@ export class WebGLTexture3D extends BaseTexture3D {
             return;
         }
         const  { gl } = this.context;
+
         gl.deleteTexture(this.texture);
+
+        this.context.freeTextureSlots(this);
+
         this.texture = null;
         this.source = null;
         this.width = this.height = this.depth = 0;

@@ -217,7 +217,6 @@ export class BaseTexture {
     }
 
     upload() {
-        this.context._activeTextures[this.id] = this;
         this.dirty = false;
     }
 
@@ -228,11 +227,10 @@ export class BaseTexture {
             return;
         }
 
-        delete this.context._activeTextures[this.id];
         this.context._textures = this.context._textures.filter((e) => e !== this);
     }
 
-    bind() {
+    bind(...args) {
 
     }
 
@@ -262,6 +260,7 @@ export class BaseTexture3D {
         this.magFilter = filter;
         this.type = type;
         this.data = data;
+        this.mode = '3d';
 
         this.context = context;
         this.id = BaseRenderer.ID++;
@@ -573,7 +572,9 @@ export default class BaseRenderer {
          */
         this._target = null;
 
-        this._activeTextures = {};
+        this._activeTextures = [];
+
+        this.passID = 0;
 
         /**
          * @type {BaseTexture[]}
@@ -725,6 +726,7 @@ export default class BaseRenderer {
         target = null,
         viewport = null
     }) {
+        this.passID ++;
         if (target && !target.valid) {
             throw 'Try bound invalid RenderTarget';
         }
