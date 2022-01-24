@@ -85,7 +85,7 @@ export class WebGLCubeShader extends WebGLUniversalShader {
     }
 
     bind(force = false) {
-        this.texture.bind(0);
+        //this.texture.bind(0);
 
         super.bind(force);
     }
@@ -325,9 +325,9 @@ export default class WebGLRenderer extends BaseRenderer {
         gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-        this._emptyTex3D.bind(5)
-
         this.maxActiveTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+        this._emptyTex3D.bind();
 
         return Promise.resolve(this);
     }

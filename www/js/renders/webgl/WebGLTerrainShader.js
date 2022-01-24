@@ -59,6 +59,9 @@ export class WebGLTerrainShader extends BaseTerrainShader {
         this.globalID = -1;
         this.program = program;
         this.boundID = 0;
+
+        this.baseTextureSlot = 4;
+        this.lightTextureSlot = 5;
     }
 
     bind(force = false) {
@@ -77,10 +80,13 @@ export class WebGLTerrainShader extends BaseTerrainShader {
     update() {
         const { gl } = this.context;
         const gu = this.globalUniforms;
-        if (this.globalID === -1) {
-            gl.uniform1i(this.u_texture, 4);
-            gl.uniform1i(this.u_lightTex, 5);
-        }
+        
+        // bind light texture and texture
+        // we can't use static slots 
+        // because texture will be bounded automatical
+        gl.uniform1i(this.u_texture, this.baseTextureSlot);
+        gl.uniform1i(this.u_lightTex, this.lightTextureSlot);
+    
         if (this.globalID === gu.updateID) {
             return;
         }

@@ -21,6 +21,13 @@ export class WebGLMaterial extends BaseMaterial {
         const { gl } = this.context;
         const { shader } = this;
 
+        
+        const lt = this.lightTex || this.context._emptyTex3D;
+        this.shader.lightTextureSlot = lt.bind();
+
+        const tex = this.texture || this.shader.texture;
+        this.shader.baseTextureSlot = tex.bind();
+
         this.shader.bind();
 
         const prevMat = this.shader._material;
@@ -46,11 +53,6 @@ export class WebGLMaterial extends BaseMaterial {
             gl.disable(gl.DEPTH_TEST);
         }
 
-        const tex = this.texture || this.shader.texture;
-        if (WebGLMaterial.texState !== this.texture) {
-            tex.bind(4);
-            WebGLMaterial.texState = this.texture;
-        }
         if (!prevMat || prevMat.texture !== this.texture)
         {
             const style = tex.style || TerrainTextureUniforms.default;
@@ -59,11 +61,7 @@ export class WebGLMaterial extends BaseMaterial {
             gl.uniform1f(shader.u_pixelSize, style.pixelSize);
             gl.uniform1f(shader.u_mipmap, style.mipmap);
         }
-        if (WebGLMaterial.lightState !== this.lightTex) {
-            const tex = this.lightTex || this.context._emptyTex3D;
-            tex.bind(5);
-            WebGLMaterial.lightState = this.lightTex;
-        }
+
         if (this.blendMode !== BLEND_MODES.NORMAL) {
             switch (this.blendMode) {
                 case BLEND_MODES.ADD:
