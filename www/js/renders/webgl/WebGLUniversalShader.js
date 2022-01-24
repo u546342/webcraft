@@ -143,6 +143,7 @@ export class UniformBinding {
             name,
             trimmedName,
             _value: value,
+            _isDirty: dirty,
             shader,
             isolate
         } = this;
@@ -150,8 +151,7 @@ export class UniformBinding {
         const globalUniforms = shader.context.globalUniforms;
         const gl = shader.context.gl;
         const isShaderRebound = shader.boundID === this._shaderBoundID;
-
-        let needLoad = force || isShaderRebound;
+        let needLoad = force || isShaderRebound || dirty;
 
         // try upload from GU
         // redefine base value
@@ -163,9 +163,9 @@ export class UniformBinding {
             }
         }
 
-        if (typeof value !== 'object' && !needLoad) {
+        if (typeof value !== 'object') {
             // check that last value is same
-            needLoad = this._lastLoadedValue !== value;
+            needLoad = needLoad || this._lastLoadedValue !== value;
         }
 
         this._lastLoadedValue = value;
@@ -204,6 +204,8 @@ export class UniformBinding {
         } else {
             gl[this.func](this.location, value);
         }
+
+        this._isDirty = false;
     }
 
     valueOf() {
