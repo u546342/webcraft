@@ -127,7 +127,7 @@ export class WebGLTexture extends BaseTexture {
     constructor (context, options) {
         super(context, options);
 
-        this.activePassID = -1;
+        this.bindID = -1;
     }
 
     _applyStyle() {
@@ -293,6 +293,8 @@ export default class WebGLRenderer extends BaseRenderer {
          */
         this._activeTextures = [];
 
+        this._textureBindId = -1;
+
         /**
          * @type {IWebGLShader}
          */
@@ -387,15 +389,6 @@ export default class WebGLRenderer extends BaseRenderer {
             if (old == texture) {
                 activate = false;
 
-            } else if(old && old.activePassID === this.passID) {
-                
-                /*
-                console.warn(
-                    '[Texture error] Texture slot ' + slot + 
-                    ' has texture ' + texture.id + 
-                    ' with same frame ' + this.passID);
-                */
-                //return -1;
             }
 
         // select slot automaticly 
@@ -426,9 +419,9 @@ export default class WebGLRenderer extends BaseRenderer {
                             break;
                         }
 
-                        if (t.activePassID < id && t.activePassID < this.passID) {
+                        if (t.bindID < id && t.bindID < this._textureBindId) {
                             slot = i;
-                            id = t.activePassID;
+                            id = t.bindID;
                         }
                     }
 
@@ -444,7 +437,7 @@ export default class WebGLRenderer extends BaseRenderer {
 
         this._activeTextures[targetSlot] = texture;
 
-        texture.activePassID = this.passID;
+        texture.bindID = this._textureBindId ++;
 
         if (activate) {
             gl.activeTexture(gl.TEXTURE0 + targetSlot);
