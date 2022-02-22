@@ -107,6 +107,60 @@ let gameCtrl = async function($scope, $timeout) {
     window.Game                     = new GameClass();
     $scope.App                      = Game.App = new UIApp();
 
+    protobuf.load("/data/types.proto", function(err, root) {
+        if (err)
+            throw err;
+    
+        // Obtain a message type
+        var CmdPacket = root.lookupType("madcraft.CmdPacket");
+        // var MobState = root.lookupType("madcraft.MobState");
+        // var MobInventory = root.lookupType("madcraft.MobInventory");
+        var Cmds = root.lookupType("madcraft.Cmds");
+
+        // Exemplary payload
+        var payload_mob = CmdPacket.create({
+            name: 75,
+            data: {
+                '@type': 'madcraft.MobState',
+                id: 1001,
+                pos: {x: 4666.1, y: 2654.75, z: 476.55},
+                rotate: {x: 16.76, y: 2.678, z: 87.83}
+            }
+        });
+        /*var payload_inventory = {
+            '@type': 'madcraft.MobInventory',
+            name: 76,
+            data: 12345
+        };*/
+
+        var payload = {
+            items: [
+                payload_mob,
+                // payload_inventory
+                // MobState.create(payload_mob),
+                // MobInventory.create(payload_inventory),
+            ]
+        };
+
+        var buffer = Cmds.encode(Cmds.create(payload)).finish();
+
+        var message = Cmds.decode(buffer);
+        alert(JSON.stringify(message));
+
+        /*
+        // Encode a message to an Uint8Array (browser) or Buffer (node)
+        var buffer = CmdMobStatePacket.encode(message).finish();
+
+        console.log(buffer.length, JSON.stringify(payload).length);
+    
+        // Decode an Uint8Array (browser) or Buffer (node) to a message
+        var message = CmdMobStatePacket.decode(buffer);
+        */
+
+        // If the application uses length-delimited buffers, there is also encodeDelimited and decodeDelimited.
+
+    });
+
     //
     $scope.App.onLogin = (e) => {};
     $scope.App.onLogout = (result) => {

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package madcraft;
+
+import "google/protobuf/any.proto";
+
+message Vector {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message CmdPacket {
+    uint32 name = 4;
+    Any data = 5;
+}
+
+message MobState {
+    uint32 id = 5;
+    Vector pos = 6;
+    Vector rotate = 7;
+}
+
+message MobInventory {
+    uint32 id = 8;
+    int32 data = 9;
+}
+
+/*
+message MobStateCmdPacket {
+    extend CmdPacket {
+        MobState data = 10;
+    }
+}
+
+message MobInventoryCmdPacket {
+    extend CmdPacket {
+        MobInventory data = 11;
+    }
+}*/
+
+message Cmds {
+    repeated CmdPacket items = 12;
+}
