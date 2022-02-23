@@ -106,6 +106,23 @@ let gameCtrl = async function($scope, $timeout) {
 
     window.Game                     = new GameClass();
     $scope.App                      = Game.App = new UIApp();
+    
+    // Exemplary payload
+    var payload_mob = {
+        name: 75,
+        data: {
+            id: 1001,
+            pos: {x: 4666.1, y: 2654.75, z: 476.55},
+            rotate: {x: 16.76, y: 2.678, z: 87.83}
+        }
+    };
+
+    /*
+    var encoded = cbor.encode(payload_mob);
+    var decoded = cbor.decode(encoded);
+    console.log(new String(encoded), JSON.stringify(payload_mob));
+    console.log(encoded.length, JSON.stringify(payload_mob).length, decoded);
+    */
 
     protobuf.load("/data/types.proto", function(err, root) {
         if (err)
@@ -117,16 +134,6 @@ let gameCtrl = async function($scope, $timeout) {
         // var MobInventory = root.lookupType("madcraft.MobInventory");
         var Cmds = root.lookupType("madcraft.Cmds");
 
-        // Exemplary payload
-        var payload_mob = CmdPacket.create({
-            name: 75,
-            data: {
-                '@type': 'madcraft.MobState',
-                id: 1001,
-                pos: {x: 4666.1, y: 2654.75, z: 476.55},
-                rotate: {x: 16.76, y: 2.678, z: 87.83}
-            }
-        });
         /*var payload_inventory = {
             '@type': 'madcraft.MobInventory',
             name: 76,
@@ -145,7 +152,7 @@ let gameCtrl = async function($scope, $timeout) {
         var buffer = Cmds.encode(Cmds.create(payload)).finish();
 
         var message = Cmds.decode(buffer);
-        alert(JSON.stringify(message));
+        // alert(JSON.stringify(message));
 
         /*
         // Encode a message to an Uint8Array (browser) or Buffer (node)
