@@ -5,7 +5,7 @@ export class WebGLMaterial extends BaseMaterial {
     constructor(context, options) {
         super(context, options);
 
-        this._dirty = true;;
+        this._dirty = true;
     }
 
     changeLighTex(tex) {
@@ -73,6 +73,8 @@ export class WebGLMaterial extends BaseMaterial {
                     gl.blendFuncSeparate(gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); break;
                 case BLEND_MODES.SCREEN:
                     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_COLOR, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); break;
+                case BLEND_MODES.INVERT:
+                    gl.blendFuncSeparate(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); break;
             }
         }
 

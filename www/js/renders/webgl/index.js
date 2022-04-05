@@ -8,6 +8,7 @@ import {Resources} from "../../resources.js";
 import {WebGLTexture3D} from "./WebGLTexture3D.js";
 import {WebGLRenderTarget} from "./WebGLRenderTarget.js";
 import { WebGLUniversalShader } from "./WebGLUniversalShader.js";
+import {WebGLLineShader} from "./WebGLLineShader";
 
 const clamp = (a, b, x) => Math.min(b, Math.max(a, x));
 
@@ -302,7 +303,7 @@ export default class WebGLRenderer extends BaseRenderer {
         */
     }
 
-    clear({clearDepth = true, clearColor = true} = {}) 
+    clear({clearDepth = true, clearColor = true} = {})
     {
         const {
             gl, _clearColor
@@ -317,7 +318,7 @@ export default class WebGLRenderer extends BaseRenderer {
             _clearColor[3]
         );
 
-        mask && gl.clear(mask);        
+        mask && gl.clear(mask);
     }
 
     createRenderTarget(options) {
@@ -413,13 +414,13 @@ export default class WebGLRenderer extends BaseRenderer {
         );
 
         gl.viewport(..._viewport);
- 
+
         this.clear(options);
     }
 
     /**
      * @deprecated
-     * @param {} fogColor 
+     * @param {} fogColor
      */
     beginFrame(fogColor) {
         this.beginPass({fogColor})
@@ -528,6 +529,14 @@ export default class WebGLRenderer extends BaseRenderer {
         // stat
         this.stat.drawquads += 6;
         this.stat.drawcalls++;
+    }
+
+    createLineMaterial(options) {
+        throw new TypeError('Illegal invocation, must be overridden by subclass');
+    }
+
+    createLineShader(options) {
+        return new WebGLLineShader(options);
     }
 
     /**

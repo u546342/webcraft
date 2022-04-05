@@ -297,7 +297,8 @@ export const BLEND_MODES = {
     NORMAL: 0,
     ADD: 1,
     MULTIPLY: 2,
-    SCREEN: 3
+    SCREEN: 3,
+    INVERT: 4,
 }
 
 export class BaseMaterial {
@@ -395,7 +396,7 @@ export class BaseTerrainShader extends BaseShader {
     bind() {
     }
     unbind() {
-        
+
     }
 
     update() {
@@ -686,7 +687,7 @@ export default class BaseRenderer {
     }
 
     /**
-     * @deprecated 
+     * @deprecated
      * @see beginPass
      * @param {BaseRenderTarget} target
      */
@@ -714,10 +715,10 @@ export default class BaseRenderer {
     _configure() {
 
     }
- 
+
     /**
-     * Begin render pass to specific target 
-     * @param {PassOptions} param0 
+     * Begin render pass to specific target
+     * @param {PassOptions} param0
      */
     beginPass({
         fogColor = [0,0,0,0],
@@ -734,8 +735,8 @@ export default class BaseRenderer {
 
         const { size } = this;
 
-        const limit = target 
-            ? target 
+        const limit = target
+            ? target
             : size;
 
         const x = viewport
@@ -758,12 +759,12 @@ export default class BaseRenderer {
         this._viewport[0] = x;
         this._viewport[1] = y;
         this._viewport[2] = width;
-        this._viewport[3] = height; 
+        this._viewport[3] = height;
 
         this._clearColor[0] = fogColor[0] || 0;
         this._clearColor[1] = fogColor[1] || 0;
         this._clearColor[2] = fogColor[2] || 0;
-        this._clearColor[3] = fogColor[3] || 0;        
+        this._clearColor[3] = fogColor[3] || 0;
     }
 
     /**
@@ -774,16 +775,16 @@ export default class BaseRenderer {
     }
 
     /**
-     * @deprecated 
+     * @deprecated
      * @see beginPass
-     * @param {} fogColor 
+     * @param {} fogColor
      */
     beginFrame(fogColor) {
 
     }
 
     /**
-     * @deprecated 
+     * @deprecated
      * @see endPass
      */
     endFrame() {
@@ -844,6 +845,14 @@ export default class BaseRenderer {
     }
 
     createShader(options) {
+        throw new TypeError('Illegal invocation, must be overridden by subclass');
+    }
+
+    createLineMaterial(options) {
+        throw new TypeError('Illegal invocation, must be overridden by subclass');
+    }
+
+    createLineShader(options) {
         throw new TypeError('Illegal invocation, must be overridden by subclass');
     }
 
