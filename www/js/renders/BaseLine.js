@@ -1,6 +1,6 @@
-import {BaseShader, BLEND_MODES} from "./BaseRenderer";
-import {Color} from "../helpers";
-import glMatrix from "../../vendors/gl-matrix-3.3.min";
+import {BaseShader, BLEND_MODES} from "./BaseRenderer.js";
+import {Color} from "../helpers.js";
+import glMatrix from "../../vendors/gl-matrix-3.3.min.js";
 
 const {mat4} = glMatrix;
 

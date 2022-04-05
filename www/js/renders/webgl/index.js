@@ -8,7 +8,7 @@ import {Resources} from "../../resources.js";
 import {WebGLTexture3D} from "./WebGLTexture3D.js";
 import {WebGLRenderTarget} from "./WebGLRenderTarget.js";
 import { WebGLUniversalShader } from "./WebGLUniversalShader.js";
-import {WebGLLineShader} from "./WebGLLineShader";
+import {WebGLLineShader} from "./WebGLLineShader.js";
 
 const clamp = (a, b, x) => Math.min(b, Math.max(a, x));
 

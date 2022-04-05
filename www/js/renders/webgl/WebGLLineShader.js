@@ -1,4 +1,4 @@
-import {BaseLineShader} from "../BaseLine";
+import {BaseLineShader} from "../BaseLine.js";
 
 const lineVert = `
 `;
