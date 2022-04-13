@@ -1,7 +1,7 @@
 import {impl as alea} from '../../vendors/alea.js';
 import {Vector, SpiralGenerator, VectorCollector} from "../helpers.js";
 import {CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z, CHUNK_SIZE} from "../chunk.js";
-import {AABB} from '../core/AABB.js';
+import {AABB}  from '../core/AABB.js';
 
 // Общее количество блоков в чанке
 const DIVIDER                   = new Vector(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z);
