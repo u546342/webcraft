@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import {Vector, VectorCollector } from "../www/js/helpers.js";
 import { Chest } from './chest.js';
 import {ServerClient} from "../www/js/server_client.js";
