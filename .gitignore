@@ -4,6 +4,7 @@
 *.exe
 .idea/
 *.sqlite3
+*.bak
 node_modules
 package-lock.json
 Mickey Mouse.obj
