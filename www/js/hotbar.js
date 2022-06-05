@@ -148,6 +148,7 @@ export class Hotbar {
             let indicators = player.indicators;
             let live = indicators.live.value / 20;
             let food = indicators.food.value / 20;
+
             //
             let spn = Math.round(performance.now() / 75);
             let calcShiftY = (i, live) => {
@@ -210,7 +211,6 @@ export class Hotbar {
                 );
             }
             // foods
-            food = 0.55;
             for(let i = 0; i < Math.floor(food * 10); i++) {
                 hud.ctx.drawImage(
                     this.image,

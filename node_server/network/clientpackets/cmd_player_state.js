@@ -20,28 +20,22 @@ export default class packet_reader {
         player.world.changePlayerPosition(player, data);
   
         //
-        const distance = Math.sqrt(Math.pow(data.pos.x, 2) + Math.pow(data.pos.y, 2) + Math.pow(data.pos.z, 2));
-       // console.log(distance.toFixed(3) + " " + packet_reader.old);
-        if (distance.toFixed(0) > packet_reader.old_distance.toFixed(0)) {
-            player.state.stats.distance++;
-            if ((player.state.stats.distance % 10) == 0) {
-                player.state.indicators.food.value--;
-                console.log(player.state.indicators.food);
-			}
-            packet_reader.old_distance = distance;
-		}
-
-      /*  if ((distance.toFixed(3) % 1) == 0) {
-            player.state.stats.distance++;
-            console.log(distance);
+        if (!player.game_mode.isSpectator()) {
+            const distance = Math.sqrt(Math.pow(data.pos.x, 2) + Math.pow(data.pos.y, 2) + Math.pow(data.pos.z, 2));
+            if (distance.toFixed(0) != packet_reader.old_distance.toFixed(0)) {
+                player.state.stats.distance++;
+                if ((player.state.stats.distance % 10) == 0) {
+                    if (player.state.indicators.food.value > 0) {
+                        player.state.indicators.food.value--;
+                        new CMD_ENTITY_INDICATORS(player);
+                    }
+                    if (player.state.indicators.food.value < 1) {
+                        player.state.indicators.food.value = 20;
+                    }
+                }
+                packet_reader.old_distance = distance;
+            }
         }
-        if ((distance.toFixed(0) % 10) == 0) {
-            player.state.indicators.food.value = 5;
-            //new CMD_ENTITY_INDICATORS(player);
-           // console.log(player.state.indicators.food);
-        }
-        packet_reader.old = distance;
-        */
         return true;
     }
 
