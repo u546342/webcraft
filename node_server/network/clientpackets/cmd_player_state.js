@@ -25,14 +25,8 @@ export default class packet_reader {
             if (distance.toFixed(0) != packet_reader.old_distance.toFixed(0)) {
                 player.state.stats.distance++;
                 if ((player.state.stats.distance % 10) == 0) {
-                    if (player.state.indicators.food.value > 0) {
-                        player.state.indicators.food.value--;
-                        new CMD_ENTITY_INDICATORS(player);
-                    }
-                    if (player.state.indicators.food.value < 1) {
-                        player.state.indicators.food.value = 20;
-                    }
-                }
+                    player.changeFood(-1);
+				}
                 packet_reader.old_distance = distance;
             }
         }

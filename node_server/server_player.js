@@ -275,6 +275,7 @@ export class ServerPlayer extends Player {
         this.world.chunks.checkPlayerVisibleChunks(this, false);
         // 3.
         this.sendState();
+
         // 4.
         this.checkIndicators();
 
@@ -294,6 +295,21 @@ export class ServerPlayer extends Player {
         // this.world.sendAll(packets, [this.session.user_id]);
         this.world.sendSelected(packets, Array.from(chunk_over.connections.keys()), [this.session.user_id]);
     }
+
+    changeFood(value) {
+        if (this.is_dead) {
+            return false;
+        }
+        const ind = this.state.indicators.food;
+        const prev_value = ind.value;
+        ind.value = Math.max(prev_value + value, 0);
+        if (ind.value == 0) {
+            ind.value = 20;
+        }
+        console.log(`Player food ${prev_value} -> ${ind.value}`);
+        this.indicators_changed = true;
+        return true;
+	}
 
     //
     checkIndicators() {
