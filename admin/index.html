@@ -1,11 +1,15 @@
 <!doctype html>
-<html ng-app="gameApp" lang="en">
+<html ng-app="adminApp" lang="en">
 <head>
     <meta charset="UTF-8">
-	<title>MadCraft</title>
+	<title>MadCraft admin</title>
+	<script src="angular.min.js"></script>
+	<script src="angular.min.js"></script>
+    <script src="controller.js" type="module"></script>
 </head>
-<body >
-
-	
+<body ng-controller="adminCtrl">
+	<button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
+          <span>dgdfgdfg</span>
+    </button>
 </body>
 </html>
