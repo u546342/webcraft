@@ -30,6 +30,8 @@ import {ServerAPI} from "./server_api.js";
 import {PluginManager} from "./plugin_manager.js";
 import config from './config.js';
 
+import {ServerAdmin} from "./server_admin.js";
+
 import features from "../www/vendors/prismarine-physics/lib/features.json" assert { type: "json" };
 
 Lang.init();
@@ -84,6 +86,7 @@ app.use(compression({
 }));
 ServerStatic.init(app);
 ServerAPI.init(app);
+ServerAdmin.init(app);
 
 global.Game = new ServerGame();
 Game.startWS();
