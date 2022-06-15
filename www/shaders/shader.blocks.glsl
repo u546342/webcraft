@@ -257,9 +257,9 @@
     // sun light pass
     if (u_SunDir.w < 0.5) {
         if(v_normal.x != 0.) {
-            light = light * .95;
+            sun_light = .95;
         } else if(v_normal.y != 0.) {
-            light = light * .6;
+            sun_light = .6;
         }
     } else {
         // limit brightness to 0.2
@@ -278,8 +278,8 @@
 
     if(lightDistance < rad) {
         float percent = (1. - pow(lightDistance / rad, 1.) ) * initBright;
-
-        light = clamp(percent + light, 0., 1.);
+        local_light = percent;
+        // light = clamp(percent + light, 0., 1.);
     }
     //--
 #endif
@@ -398,10 +398,10 @@
                 texture(u_lightTex[7], aoCoord2 * texSize).g, texture(u_lightTex[7], aoCoord3 * texSize).g);
         }
     }
-    float caveSample = caveDaySample.x;
-    float daySample = 1.0 - caveDaySample.y;
+    caveSample = caveDaySample.x;
+    daySample = 1.0 - caveDaySample.y;
 
-    float aoSample = 0.0;
+    aoSample = 0.0;
     if (v_lightMode > 0.5) {
         float d1 = aoVector.x + aoVector.w, d2 = aoVector.y + aoVector.z;
         aoSample = (d1 + d2 + max(abs(d2 - d1) - 1.0, 0.0)) / 4.0;
@@ -410,16 +410,10 @@
     }
 
     float gamma = 0.5;
-    caveSample = pow(caveSample, 1.0 / gamma);
+    // caveSample = pow(caveSample, 1.0 / gamma);
+    // caveSample = caveSample * (1.0 - aoSample);
+    // daySample = daySample * (1.0 - aoSample - max(-v_normal.z, 0.0) * 0.2);
+    aoValue = (1.0 - aoSample - max(-v_normal.z, 0.0) * 0.2);
 
-    caveSample = caveSample * (1.0 - aoSample);
-    daySample = daySample * (1.0 - aoSample - max(-v_normal.z, 0.0) * 0.2);
-
-    float totalAO = caveSample + daySample * u_brightness;
-    totalAO = max(light, totalAO);
-    totalAO = min(totalAO, 1.0 - aoSample);
-    totalAO = max(totalAO, 0.075 * (1.0 - aoSample));
-
-    light = mix(totalAO, light, u_aoDisaturateFactor);
     //--
 #endif

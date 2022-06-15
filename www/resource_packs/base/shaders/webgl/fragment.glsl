@@ -41,7 +41,13 @@ void main() {
 
     vec2 biome = v_color.rg * (1. - 0.5 * step(0.5, u_mipmap));
 
-    float light = 0.0;
+    float light = 1.0;
+    float local_light = 0.0;
+    float aoValue = 0.0;
+    float caveSample = 0.0;
+    float daySample = 0.0;
+    float sun_light = 1.0;
+    float aoSample = 0.0;
 
     // Game
     if(u_fogOn) {
@@ -67,12 +73,35 @@ void main() {
         }
 
         if(v_noCanTakeAO == 0.) {
+
             #include<local_light_pass>
             #include<ao_light_pass>
             #include<sun_light_pass>
 
+            // available variables for light calculate
+            // aoValue, aoSample, local_light, caveSample, daySample, sun_light, u_brightness
+            // light = daySample * aoValue * (u_brightness * sun_light);
+            // vec3 color_light = vec3(1., 1., 1.);
+
+            // local
+            light = local_light;
+
+            // ao
+            float totalAO = caveSample + daySample * u_brightness;
+            totalAO = max(light, totalAO);
+            totalAO = min(totalAO, 1.0 - aoSample);
+            totalAO = max(totalAO, 0.075 * (1.0 - aoSample));
+            light = mix(totalAO, light, u_aoDisaturateFactor);
+
+            // sun
+            light = light * sun_light;
+
             // Apply light
-            color.rgb *= light;
+            // color.rgb *= light;
+            vec3 color_light = vec3(light, light, light);
+            color.rgb *= color_light;
+
+
         }
 
         outColor = color;
