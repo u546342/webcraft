@@ -2,14 +2,24 @@
 <html ng-app="adminApp" lang="en">
 <head>
     <meta charset="UTF-8">
-	<title>MadCraft admin</title>
-	<script src="angular.min.js"></script>
-	<script src="angular.min.js"></script>
+    <title>MadCraft admin</title>
+    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
+    <script src="angular.min.js"></script>
     <script src="controller.js" type="module"></script>
 </head>
 <body ng-controller="adminCtrl">
-	<button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
-          <span>dgdfgdfg</span>
-    </button>
+    <div class="menu">
+
+    </div>
+
+        <button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
+            <span>dgdfgdfg</span>
+        </button>
+        <table>
+            <tr ng-repeat="world in worlds">
+                <td>{{ world.title }}</td>
+                <td>{{ world.id }}</td>
+            </tr>
+        </table>
 </body>
 </html>

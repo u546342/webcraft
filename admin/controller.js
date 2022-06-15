@@ -14,7 +14,8 @@ let adminCtrl = async function($scope, $timeout) {
         },
         submit: function() {
             $scope.App.MyWorlds({}, (worlds) => {
-                console.log(worlds);
+                $scope.worlds = worlds;
+                console.log(worlds)
             });
         }
     }
