@@ -429,7 +429,7 @@ export class Resources {
         const resp = [];
         await Helpers.fetchJSON('../media/models/database.json').then(json => {
             for(let k in json.assets) {
-                if(k.indexOf('player:') === 0) {
+                if(k.indexOf('player:') === 0 && k.indexOf('player:armor') < 0) {
                     for(let skin_id in json.assets[k].skins) {
                         resp.push({
                             id: skin_id,

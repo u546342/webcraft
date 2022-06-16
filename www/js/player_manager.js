@@ -39,6 +39,7 @@ export class PlayerManager {
             skin:           data.skin,
             username:       data.username,
             type:           data.type || 'player',
+            armor:          'armor_diamond_my'
         });
 
         player.world = this.world;

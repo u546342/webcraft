@@ -103,7 +103,6 @@
                 "19": "player_skins/19.png",
                 "20": "player_skins/20.png",
                 "21": "player_skins/21.png",
-                "22": "player_skins/22.png",
                 "24": "player_skins/24.png"
             }
         },
@@ -115,11 +114,27 @@
                 "2": "player_skins/2.png",
                 "8": "player_skins/8.png",
                 "18": "player_skins/18.png",
+                "22": "player_skins/22.png",
                 "23": "player_skins/23.png",
                 "25": "player_skins/25.png",
                 "26": "player_skins/26.png"
             }
         },
+
+        "player:armor": {
+            "type": "json",
+            "geom": "json/steve.geo.json",
+            "baseSkin": "armor_diamond",
+            "skins": {
+                "armor_chainmail": "armor/chainmail_layer_1.png",
+                "armor_iron": "armor/iron_layer_1.png",
+                "armor_gold": "armor/gold_layer_1.png",
+                "armor_diamond": "armor/diamond_layer_1.png",
+                "armor_netherite": "armor/netherite_layer_1.png",
+                "armor_diamond_my": "armor/diamond_my.png"
+            }
+        },
+
         "chicken": {
             "type": "json",
             "geom": "json/chicken.geo.json",

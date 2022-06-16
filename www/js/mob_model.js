@@ -86,6 +86,28 @@ export class TraversableRenderer {
             node.matrixWorld
         );
 
+        if(node.armor_material || traversable.armor_material) {
+            const scale = 1.3;
+            let matrix_armor = [...node.matrixWorld]
+            mat4.scale(matrix_armor, matrix_armor, [scale, scale, scale]);
+            let y = 0;
+            const nn = node.name.toLowerCase();
+            if(nn.indexOf('head') >= 0) {
+                y = -(traversable.height * scale - traversable.height)/1.2;
+            } else if(nn.indexOf('arm') >= 0) {
+                y = -(traversable.height * scale - traversable.height) / 2;
+            } else if(nn.indexOf('body') >= 0) {
+                y = -(traversable.height * scale - traversable.height)/2;
+            }
+            mat4.translate(matrix_armor, matrix_armor, [0, 0, y]);
+            render.renderBackend.drawMesh(
+                node.terrainGeometry,
+                node.armor_material || traversable.armor_material,
+                traversable.drawPos,
+                matrix_armor
+            );
+        }
+
         return true;
     }
 
@@ -504,6 +526,7 @@ export class MobModel extends NetworkPhysicObject {
 
         this.type = props.type;
         this.skin = props.skin_id || props.skin;
+        this.armor = props.armor || null;
 
         /**
          * @type {SceneNode[]}
@@ -828,7 +851,25 @@ export class MobModel extends NetworkPhysicObject {
 
         const image = await asset.getSkin(this.skin);
 
+        this.changeArmor(render, this.armor);
+
         this.loadTextures(render, image);
+    }
+
+    //
+    async changeArmor(render, armor) {
+        if(!armor) {
+            return
+        }
+        const asset = await Resources.getModelAsset('player:armor')
+        const image = await asset.getSkin(armor);
+        this.armor_texture = render.renderBackend.createTexture({
+            source: image,
+            minFilter: 'nearest',
+            magFilter: 'nearest',
+            shared: true
+        });
+        this.armor_material = render.defaultShader.materials.doubleface_transparent.getSubMat(this.armor_texture)
     }
 
     /**
