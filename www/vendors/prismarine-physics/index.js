@@ -54,7 +54,7 @@ export function Physics(mcData, fake_world, options) {
         gravity: 0.08, // blocks/tick^2 https://minecraft.gamepedia.com/Entity#Motion_of_entities
         // Flying
         flyinGravity: 0.06,
-        flyingYSpeed: Math.fround(0.42 / 2),
+        flyingYSpeed: typeof options.flyingYSpeed === 'undefined' ? 0.21 : options.flyingYSpeed,
         flyingInertiaMultiplyer: 1.5,
         //
         airdrag: Math.fround(1 - 0.02), // actually (1 - drag)

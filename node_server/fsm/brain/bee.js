@@ -2,6 +2,7 @@ import { FSMBrain } from "../brain.js";
 import { Vector } from "../../../www/js/helpers.js";
 import { PickatActions } from "../../../www/js/block_action.js";
 import { BeeNest } from "../../../www/js/block_type/bee_nest.js";
+import { BLOCK } from "../../../www/js/blocks.js";
 
 const MAX_POLLEN = 4;
 const POLLEN_PER_TICK = 0.02;
@@ -14,19 +15,17 @@ export class Brain extends FSMBrain {
         this.prevPos        = new Vector(mob.pos);
         this.lerpPos        = new Vector(mob.pos);
         this.pc             = this.createPlayerControl(this,{
-            baseSpeed: 0.25,
-            playerHeight: 0.6,
+            baseSpeed: 0.15,
+            playerHeight: 0.3,
             stepHeight: 1,
-            playerHalfWidth: 0.3,
+            playerHalfWidth: .3,
+            flyingYSpeed: 0.05
         });
         
         this.pc.player_state.flying = true;// @todo костыль от сброса полета при касании земли
         
-        this.ticks_pollination = 0;
-        this.ticks_anger = 0;
-        this.ticks_attack = 0;
-        
         //consts
+        this.find_nest_distance = 20;
         this.distance_attack = 1.5;
         this.interval_attack = 16;
         this.follow_distance = 10;
@@ -35,6 +34,10 @@ export class Brain extends FSMBrain {
         this.damage = 2;
         this.live = 10;
         this.fly = 0;
+        
+        this.ticks_pollination = 0;
+        this.ticks_anger = this.anger_time;
+        this.ticks_attack = 0;
         
         this.stack.pushState(this.doForward);
         
@@ -55,7 +58,7 @@ export class Brain extends FSMBrain {
         
         // if on plant
         if (legs && legs.id != 0 && legs.material.style == 'default') {
-            if(ignore_nest || (legs && legs.hasTag && !legs.hasTag('bee_nest'))) {
+            if(ignore_nest || !legs.hasTag('bee_nest')) {
                 this.fly = Math.random() * 20 | 0;
             }
         }
@@ -73,16 +76,40 @@ export class Brain extends FSMBrain {
         
         return { body, legs, jump, sneak };
     }
+    
+    //Находит игрока с цветком в руке
+    findFriendTarget() {
+        if (this.target == null) {
+            const mob = this.mob;
+            const players = this.getPlayersNear(mob.pos, this.follow_distance, false);
+            let friends = [];
+            for (let player of players) {
+                const id = player.state.hands.right.id;
+                if (id && BLOCK.fromId(id).is_flower) {
+                    friends.push(player);
+                }
+            }
+            if (friends.length > 0) {
+                const rnd = (Math.random() * friends.length) | 0;
+                const player = friends[rnd];
+                this.target = player.session.user_id;
+                this.stack.replaceState(this.doFollowFriend);
+                return true;
+            }
+        }
+        return false;
+    }
 
     // возвращение в улей
     async doReturnToHome(delta) {
         const mob = this.mob;
         const block = this.getFlightBlocks(false);
+        const world = mob.getWorld();
         
         if (Math.random() < 0.02) {
             mob.rotate.z = this.angleTo(mob.pos_spawn);
         } else if (Math.random() < 0.02) {
-           mob.rotate.z = Math.round(((mob.rotate.z + Math.random() * Math.PI / 4) % 6.28) * 1000) / 1000;
+           mob.rotate.z = Math.round(((mob.rotate.z + Math.random() * Math.PI / 4) % 6.281) * 1000) / 1000;
         }
         
         this.updateControl({
@@ -97,32 +124,61 @@ export class Brain extends FSMBrain {
         // check if near nest
         const spawn_distance = mob.pos.distance(mob.pos_spawn);
         if(spawn_distance < 1) {
-            const world = mob.getWorld();
             const tblock = world.getBlock(mob.pos_spawn.floored());
             if(tblock && tblock.hasTag('bee_nest')) {
                 console.log('found BeeNest');
                 const nest = new BeeNest(tblock);
                 await nest.appendMob(mob);
+            } else {
+                //если на месте спауна нет улья, то ищем новый
+               this.stack.replaceState(this.doFindNest);
             }
         }
+    }
+    
+    //поиск улья
+    doFindNest(delta) {
+        const mob = this.mob;
+        const world = mob.getWorld();
+        const nests = world.getBeeNestsNear(mob.pos, this.find_nest_distance);
+        if (nests.length <= 0) {
+            console.log('[AI] not found nest in radius ' + this.find_nest_distance);
+            this.stack.replaceState(this.doForward);
+            return;
+        }
+        for (const nest of nests) {
+            if (nest.posworld.equal(mob.pos_spawn.flooredSelf())) {
+                console.log('[AI] found nest in radius ' + this.find_nest_distance);
+                this.stack.replaceState(this.doReturnToHome);
+                return;
+            }
+        }
+        
+        const rnd = (Math.random() * nests.length) | 0;
+        console.log('[AI] new nest random ' + mob.pos_spawn + " " + nests[rnd].posworld);
+        mob.pos_spawn = nests[rnd].posworld.clone();
+        this.stack.replaceState(this.doReturnToHome);
     }
 
     // сбор пыльцы
     doPollen(delta) {
         const mob = this.mob;
+        const block = this.getFlightBlocks(true);
+        const sneak = block.body.id != 0 ? false : true;
+        mob.rotate.z = this.angleTo(block.legs.posworld);
         this.updateControl({
             yaw: mob.rotate.z,
             jump: false,
             forward: false,
-            sneak: true
+            sneak: sneak
         });
         this.applyControl(delta);
         this.sendState();
         if (mob.extra_data.pollen >= MAX_POLLEN) {
             mob.extra_data.pollen = MAX_POLLEN;
-            console.log("[AI] doReturnToHome");
+            console.log("[AI] doFindNest");
             this.ticks_pollination = 0;
-            this.stack.replaceState(this.doReturnToHome);
+            this.stack.replaceState(this.doFindNest);
         } else {
             mob.extra_data.pollen += POLLEN_PER_TICK;
         }
@@ -130,12 +186,15 @@ export class Brain extends FSMBrain {
 
     // просто полет
     doForward(delta) {
-        const mob = this.mob;
+        if (this.findFriendTarget()) {
+            return;
+        }
         
+        const mob = this.mob;
         const block = this.getFlightBlocks(true);
         
-        if (Math.random() < 0.02) {
-           mob.rotate.z = Math.round(((mob.rotate.z + Math.random() * Math.PI / 4) % 6.28) * 1000) / 1000;
+        if (Math.random() < 0.02 || block.body.id != 0) {
+            mob.rotate.z = Math.round(((mob.rotate.z + Math.random() * Math.PI / 4) % 6.28) * 1000) / 1000;
         }
         
         const hive_distance = mob.pos.distance(mob.pos_spawn);
@@ -153,40 +212,38 @@ export class Brain extends FSMBrain {
         this.sendState();
         
         // если на уровне ног есть цветок
-        if (block.legs && block.legs.hasTag && block.legs.hasTag('flower')) {
+        if (block.legs.hasTag('flower')) {
             if(mob.extra_data.pollen < MAX_POLLEN && this.ticks_pollination > 300) {
                 console.log("[AI] doPollen");
                 this.stack.replaceState(this.doPollen);
             }
         }
         
-        // если наступил вечер или набрали пыльцы, то меняем состояние на "лететь в улей"
+        // если наступил вечер или набрали пыльцы, то меняем состояние на "поиск улья"
         const world = mob.getWorld();
         const time = world.info.calendar.day_time;
         if (time < 6000 || time > 18000 || mob.extra_data.pollen >= MAX_POLLEN) {
-            console.log("[AI] doReturnToHome");
-            this.stack.replaceState(this.doReturnToHome);
+            console.log("[AI] doFindNest");
+            this.stack.replaceState(this.doFindNest);
         }
         
         this.ticks_pollination++;
-
-        // теряет немного пыльцы в полёте
         mob.extra_data.pollen -= POLLEN_PER_TICK / 10;
-        mob.extra_data.pollen = Math.max(mob.extra_data.pollen, 0);
-
     }
-
-    // преследование игрока
-    doFollow(delta) {
-        const mob = this.mob;
+    
+    //Преследовать игрока, если у него в руках цветок
+    doFollowFriend(delta) {
         
         if (!this.target) {
             this.stack.replaceState(this.doForward);
             return;
         }
         
-        const player = mob.getWorld().players.get(this.target);
-        if (!player || mob.playerCanBeAtacked(player)) {
+        const mob = this.mob;
+        const world = mob.getWorld();
+        const player = world.players.get(this.target);
+        const item_id = player.state.hands.right.id;
+        if (!player || !BLOCK.fromId(item_id).is_flower || player.game_mode.isSpectator() || distance > this.follow_distance) {
             this.target = null;
             this.stack.replaceState(this.doForward);
             return;
@@ -199,13 +256,55 @@ export class Brain extends FSMBrain {
             return;
         }
         
+        const block = this.getFlightBlocks(true);
+        const forward = (distance > 1.5) ? true : false;
+        this.updateControl({
+            yaw: mob.rotate.z,
+            jump: block.jump,
+            forward: forward,
+            sneak: block.sneak
+        });
+        this.applyControl(delta);
+        this.sendState();
+        
+        this.ticks_pollination++;
+        mob.extra_data.pollen -= POLLEN_PER_TICK / 10;
+    }
+
+    // преследование игрока
+    doFollow(delta) {
+
+        if (!this.target) {
+            this.stack.replaceState(this.doForward);
+            return;
+        }
+        
+        const mob = this.mob;
+        const world = mob.getWorld();
+        const player = world.players.get(this.target);
+        if (!player || mob.playerCanBeAtacked(player)) {
+            this.ticks_anger = this.anger_time;
+            this.ticks_attack = 0;
+            this.target = null;
+            this.stack.replaceState(this.doForward);
+            return;
+        }
+        
+        const distance = mob.pos.horizontalDistance(player.state.pos);
+        if (distance > this.follow_distance) {
+            this.ticks_anger = this.anger_time;
+            this.ticks_attack = 0;
+            this.target = null;
+            this.stack.replaceState(this.doForward);
+            return;
+        }
+        
         mob.rotate.z = this.angleTo(player.state.pos);
         
-        if (this.ticks_anger <= this.anger_time) {
+        if (this.ticks_anger < this.anger_time) {
             if (Math.abs(player.state.pos.y + 2 - mob.pos.y) < 0.5 && this.ticks_attack > this.interval_attack && distance < this.distance_attack) {
                 this.ticks_attack = 0;
                 player.changeLive(-this.damage);
-                const world = mob.getWorld();
                 const actions = new PickatActions();
                 actions.addPlaySound({ tag: 'madcraft:block.player', action: 'hit', pos: player.state.pos.clone() }); // Звук получения урона
                 world.actions_queue.add(player, actions);
@@ -214,6 +313,7 @@ export class Brain extends FSMBrain {
             this.ticks_attack++;
             this.ticks_anger++;
             if (this.ticks_anger == this.anger_time) {
+                this.ticks_attack = 0;
                 this.target = null;
                 this.stack.replaceState(this.doForward);
                 return;
@@ -252,6 +352,7 @@ export class Brain extends FSMBrain {
     setCommonTarget(id) {
         this.target = id;
         this.ticks_anger = 0;
+        this.ticks_attack = 0;
         this.stack.replaceState(this.doFollow);
     }
     
