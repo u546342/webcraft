@@ -8,18 +8,52 @@
     <script src="controller.js" type="module"></script>
 </head>
 <body ng-controller="adminCtrl">
-    <div class="menu">
+    <div id="adminka">
+        <div class="header">
+            <div style="padding:18px 25px 5px 5px;">
 
-    </div>
+                <div style="float:left; padding:3px 0 0 15px">
+                    <img src="media/2.png" align="absmiddle" /> {name} ({group})
+                </div>
 
-        <button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
-            <span>dgdfgdfg</span>
-        </button>
-        <table>
-            <tr ng-repeat="world in worlds">
-                <td>{{ world.title }}</td>
-                <td>{{ world.id }}</td>
-            </tr>
-        </table>
+                <div style="float:right;">
+                    <div class="navheadl" onclick="location.href = '{$PHP_SELF}?mod=main'">На главную</div>
+                    <div class="navhead" onclick="location.href = '{$PHP_SELF}?mod=options'">Настройки</div>
+                    <div class="navhead" onclick="location.href = '{$config['url_home']}','_blank'">Сайт</div>
+                    <div class="navheadr" onclick="location.href = '{$PHP_SELF}?action=logout'">Выход</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="wrapper">
+            <div class="blockt">
+                Список миров (<span id="count"></span>)
+                <button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
+                    <span>update</span>
+                </button>
+            </div>
+            <div class="blockc">
+                <table width="100%">
+                    <thead>
+                        <tr>
+                            <td class="desc">Заголовок</td>
+                            <td width="200px">Дата</td>
+                            <td width="100px">Автор</td>
+                            <th width="100px">Функции</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="world in worlds">
+                            <td>{{ world.title }}</td>
+                            <td>{{ world.id }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="clear"></div>
+        </div>
+        <div id="rasporka"></div>
+    </div> 
 </body>
 </html>
