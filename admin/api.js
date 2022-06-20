@@ -1,5 +1,4 @@
 export class API_Client {
-
     // Организует вызов API, обработку ответа и вызов callback-функции
     async call(App, url, data, callback, callback_error, callback_progress, callback_final) {
         let session         = App.getSession()
@@ -9,7 +8,6 @@ export class API_Client {
         callback_error      = callback_error || null;
         callback_progress   = callback_progress || null;
         callback_final      = callback_final || null;
-        // var deferred        = $q.defer();
         var headers = {
             'X-Language-Locale': 'ru',
             'Content-Type': 'application/json'

@@ -1,8 +1,17 @@
 import express from "express"; 
+import { DBWorld } from './db_world.js';
 
 const FLAG_SYSTEM_ADMIN = 256;
 
 export class ServerAPI {
+    
+    static IsOnline(user_id) {
+        for(let world of Game.worlds.values()) {
+            if(world.players) {
+                console.log(world);
+            }
+        }
+    }
 
     static init(app) {
         // JSONRpc API
@@ -72,6 +81,74 @@ export class ServerAPI {
                             }
                         }
                         res.status(200).json(resp);
+                        break;
+                    }
+                    //Список миров
+                    case '/api/Admin/ListWorlds': {
+                        const session = await Game.db.GetPlayerSession(req.get('x-session-id'));
+                        let result = await Game.db.getListWorlds(session.user_id);
+                        for (const row of result) {
+                            row.online = 0;
+                            row.chunks = 0;
+                            const players = await Game.db.getListPlayers(row.id, session.user_id);
+                            row.players = players.length;
+                            const world = Game.worlds.get(row.guid);
+                            if (world) {
+                                row.chunks = world.chunks.all.list.size;
+                                row.online = world.players.size;
+                            }
+                        }
+                        res.status(200).json(result);
+                        break;
+                    }
+                    //Список пользователей в мире
+                    case '/api/Admin/ListPlayers': {
+                        const session = await Game.db.GetPlayerSession(req.get('x-session-id'));
+                        const world = await Game.db.getWorldById(req.body.id, session.user_id);
+                        let result = [];
+                        if (world) {
+                            const db = await DBWorld.openDB("../world/" + world.guid, null);
+                            if (db) {
+                                const players = await Game.db.getListPlayers(world.id);
+                                const game = Game.worlds.get(world.guid);
+                                for (const player of players) { 
+                                    let online = false;
+                                    let items = 0;
+                                    if (game && game.players.get(player.id)) {
+                                        online = true;
+                                    }
+                                    const info = await db.getPlayerInfo(player.id);
+                                    for (let cell of info.inventory.items) {
+                                        if (cell) {
+                                            items++;
+                                        }
+                                    }
+                                    result.push({
+                                        'id': info.id,
+                                        'world': world.id,
+                                        'username': info.username,
+                                        'is_admin': info.is_admin,
+                                        'online': online,
+                                        'items': items
+                                    });
+                                }
+                            }
+                        }
+                        res.status(200).json(result);
+                        break;
+                    }
+                    //Информация об игроке
+                    case '/api/Admin/InfoPlayer': {
+                        const session = await Game.db.GetPlayerSession(req.get('x-session-id'));
+                        const world = await Game.db.getWorldById(req.body.world, session.user_id);
+                        let result = [];
+                        if (world) {
+                            const db = await DBWorld.openDB("../world/" + world.guid, null);
+                            if (db) {
+                                result = await db.getPlayerInfo(req.body.id);
+                            }
+                        }
+                        res.status(200).json(result);
                         break;
                     }
                     default: {

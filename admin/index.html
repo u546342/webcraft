@@ -1,59 +1,105 @@
 <!doctype html>
-<html ng-app="adminApp" lang="en">
+<html ng-app="app" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>MadCraft admin</title>
-    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
     <script src="angular.min.js"></script>
     <script src="controller.js" type="module"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </head>
-<body ng-controller="adminCtrl">
+<body ng-controller="admin_ctrl">
     <div id="adminka">
-        <div class="header">
-            <div style="padding:18px 25px 5px 5px;">
-
-                <div style="float:left; padding:3px 0 0 15px">
-                    <img src="media/2.png" align="absmiddle" /> {name} ({group})
-                </div>
-
-                <div style="float:right;">
-                    <div class="navheadl" onclick="location.href = '{$PHP_SELF}?mod=main'">На главную</div>
-                    <div class="navhead" onclick="location.href = '{$PHP_SELF}?mod=options'">Настройки</div>
-                    <div class="navhead" onclick="location.href = '{$config['url_home']}','_blank'">Сайт</div>
-                    <div class="navheadr" onclick="location.href = '{$PHP_SELF}?action=logout'">Выход</div>
-                </div>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">
+                <img src="media/2.png" width="30" height="30" alt="">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#" ng-click="worlds.submit()">Список миров</a>
+                    </li>
+                </ul>
             </div>
-        </div>
-
-        <div id="wrapper">
-            <div class="blockt">
-                Список миров (<span id="count"></span>)
-                <button class="btn btn-main" ng-click="registration.submit()" ng-class="{disabled: !registration.isValid()}">
-                    <span>update</span>
-                </button>
-            </div>
-            <div class="blockc">
-                <table width="100%">
-                    <thead>
-                        <tr>
-                            <td class="desc">Заголовок</td>
-                            <td width="200px">Дата</td>
-                            <td width="100px">Автор</td>
-                            <th width="100px">Функции</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="world in worlds">
-                            <td>{{ world.title }}</td>
-                            <td>{{ world.id }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+        </nav>
+        <div class="container" ng-init="worlds.submit()">
+            <div class="card" ng-if="worlds.visible">
+                <div class="card-header">
+                    Активные миры (<span id="count">{{ worlds.count }}</span>)
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Заголовок</th>
+                                <th>Количество игроков</th>
+                                <th>Количество чанков</th>
+                                <th>Сид</th>
+                                <th>Функции</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="world in worlds.list">
+                                <td>{{ world.title }}</td>
+                                <td>{{ world.online }}/{{ world.players }}</td>
+                                <td>{{ world.chunks }}</td>
+                                <td>{{ world.seed }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-info" ng-click="worlds.info(world.id)">
+                                        i
+                                    </button>
+                                </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
-            <div class="clear"></div>
+            <div class="card" ng-if="players.visible">
+                <div class="card-header">
+                    Список игроков в мире (<span id="count">{{ players.count }}</span>)
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>Администратор</th>
+                                <th>В игре</th>
+                                <th>Инвентарь</th>
+                                <th width="100px">Функции</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="player in players.list">
+                                <td>{{ player.username }}</td>
+                                <td>{{ player.is_admin ? "да" : "нет" }}</td>
+                                <td>{{ player.online ? "да" : "нет" }}</td>
+                                <td>{{ player.items }} / 42</td>
+                                <td>
+                                    <button type="button" class="btn btn-info" ng-click="players.info(player.world, player.id)">
+                                        i
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card" ng-if="info.visible">
+                <div class="card-header">
+                    Информация об игроке
+                </div>
+                <div class="card-body">
+                    <p>Ник: {{ info.username }}</p>
+                    <p>Здоровье: {{ info.indicators.live.value }}</p>
+                    <p>Пройдено: {{ info.stats.distance }}</p>
+                </div>
+            </div>
         </div>
-        <div id="rasporka"></div>
-    </div> 
 </body>
 </html>

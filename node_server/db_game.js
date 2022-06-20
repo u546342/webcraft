@@ -309,5 +309,43 @@ export class DBGame {
         });
         return !!result;
     }
-
+    
+    
+    async getWorldById(world_id, user_id) {
+        const result = await this.db.get("SELECT guid, id FROM world WHERE user_id = :user AND id = :id", {
+            ":user": parseInt(user_id),
+            ":id": parseInt(world_id)
+        });
+        return result;
+    }
+    
+    async getListWorlds(user_id) {
+        const rows = await this.db.all("SELECT id, guid, title, seed FROM world WHERE user_id = :id", {
+            ":id": parseInt(user_id)
+        });
+        let result = [];
+        for (let row of rows) {
+            result.push({
+                'id': row.id,
+                'guid': row.guid,
+                'title' : row.title,
+                'seed': row.seed
+            });
+        }
+        return result;
+    }
+    
+    async getListPlayers(world_id) {
+        let result = [];
+        const rows = await this.db.all("SELECT * FROM user, world_player WHERE world_player.world_id = :id AND user.id = world_player.user_id", {
+            ":id": parseInt(world_id)
+        });
+        for (let user of rows) {
+            result.push({
+                'id': user.user_id,
+                'username' : user.username
+            });
+        }
+        return result;
+    }
 }

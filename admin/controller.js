@@ -1,24 +1,55 @@
 import {UIApp} from './app.js';
 
-let app = angular.module('adminApp', []);
-
-let adminCtrl = async function($scope, $timeout) {
+const app = angular.module('app', []);
+const admin_ctrl = async function($scope, $timeout) {
     
     $scope.App = new UIApp();
     
-    $scope.registration = {
-        loading: false,
-        form: {
-            username: '',
-            password: ''
-        },
+    $scope.info = {
+        visible: false,
+    }
+    
+    $scope.players = {
+        visible: false,
+        info: function(world, id) {
+            $scope.App.InfoPlayer({world: world, id: id}, (player) => {
+                $timeout(() => {
+                    $scope.worlds.visible = false;
+                    $scope.players.visible = false;
+                    $scope.info = player;
+                    $scope.info.visible = true;
+                    
+                    console.log(player);
+                });
+            });
+        }
+    }
+    
+    $scope.worlds = {
+        visible: true,
         submit: function() {
-            $scope.App.MyWorlds({}, (worlds) => {
-                $scope.worlds = worlds;
-                console.log(worlds)
+            $scope.worlds.visible = true;
+            $scope.players.visible = false;
+            $scope.info.visible = false;
+            $scope.App.ListWorlds({}, (worlds) => {
+                $timeout(() => {
+                    $scope.worlds.list = worlds;
+                    $scope.worlds.count = worlds.length;
+                });
+            });
+        },
+        info: function(id) {
+            $scope.App.ListPlayers({id: id}, (players) => {
+                $timeout(() => {
+                    $scope.worlds.visible = false;
+                    $scope.info.visible = false;
+                    $scope.players.visible = true;
+                    $scope.players.list = players;
+                    $scope.players.count = players.length;
+                });
             });
         }
     }
 };
 
-app.controller('adminCtrl', adminCtrl);
+app.controller('admin_ctrl', admin_ctrl);

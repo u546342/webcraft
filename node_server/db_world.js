@@ -1159,5 +1159,22 @@ export class DBWorld {
             ":z": z
         });
     }
+    
+    async getPlayerInfo(user_id) {
+        const row = await this.db.get("SELECT * FROM user WHERE id=:id", {
+            ":id": parseInt(user_id)
+        });
+        
+        let result = {};
+        if (row) {
+            result.id = row.id;
+            result.username = row.username;
+            result.inventory = JSON.parse(row.inventory);
+            result.stats = JSON.parse(row.stats);
+            result.indicators = JSON.parse(row.indicators);
+        }
+        
+        return result;
+    }
 
 }
