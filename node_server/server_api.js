@@ -94,7 +94,7 @@ export class ServerAPI {
                             row.players = players.length;
                             const world = Game.worlds.get(row.guid);
                             if (world) {
-                                row.chunks = world.chunks.all.list.size;
+                                row.chunks = world.chunks.all.size;
                                 row.online = world.players.size;
                             }
                         }
