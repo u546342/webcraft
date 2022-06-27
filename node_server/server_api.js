@@ -98,7 +98,16 @@ export class ServerAPI {
                                 row.online = world.players.size;
                             }
                         }
-                        res.status(200).json(result);
+                        
+                        let data = {rows:[]};
+                        
+                        for (let i = 0; i < 20; i) {
+                             for (const row of result) {
+                                data.rows.push(row);
+                             }
+                        }
+                        
+                        res.status(200).json(data);
                         break;
                     }
                     //Список пользователей в мире

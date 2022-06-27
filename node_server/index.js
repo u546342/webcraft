@@ -8,7 +8,7 @@ import sqlite3 from 'sqlite3'
 
 // Check version of modules
 const required_versions = {
-    nodejs: ['v17.2.0', 'v17.9.0'],
+    nodejs: ['v17.2.0', 'v17.9.0', 'v18.4.0'],
     sqlite3: ['3.38.4'] // 5.0.8
 };
 function checkVersion(module_name, current) {

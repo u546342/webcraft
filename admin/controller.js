@@ -33,7 +33,7 @@ const admin_ctrl = async function($scope, $timeout) {
             $scope.info.visible = false;
             $scope.App.ListWorlds({}, (worlds) => {
                 $timeout(() => {
-                    $scope.worlds.list = worlds;
+                    $scope.worlds.list = worlds.list;
                     $scope.worlds.count = worlds.length;
                 });
             });
