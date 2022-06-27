@@ -5,6 +5,7 @@ const {mat3, mat4} = glMatrix;
 
 const defaultPivot = [0.5, 0.5, 0.5];
 const defaultMatrix = mat3.create();
+const tempMatrix = mat3.create();
 
 export function pushTransformed(
     vertices, mat, pivot,
@@ -180,7 +181,7 @@ export default class style {
         if(block.hasTag('mask_biome')) {
             lm = dirt_color;
             flags = QUAD_FLAGS.MASK_BIOME;
-        } else if(block.hasTag('mask_color')) {
+        } else if(block.hasTag('mask_color') && material.mask_color) {
             lm = material.mask_color;
             flags = QUAD_FLAGS.MASK_BIOME;
         }

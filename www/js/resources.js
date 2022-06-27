@@ -1,5 +1,24 @@
 import { Helpers } from "./helpers.js";
 
+export const COLOR_PALETTE = {
+    white: [0, 0],      // Белая керамика - white_terracotta
+    orange: [2, 1],     // Оранжевая керамика - orange_terracotta
+    magenta: [2, 3],    // Сиреневая керамика - magenta_terracotta
+    light_blue: [3, 2], // Светло-синяя керамика - light_blue_terracotta
+    yellow: [3, 1],     // Жёлтая керамика - yellow_terracotta
+    lime: [0, 2],       // Лаймовая керамика - lime_terracotta
+    pink: [3, 3],       // Розовая керамика - pink_terracotta
+    gray: [2, 0],       // Серая керамика - gray_terracotta
+    light_gray: [1, 0], // Светло-серая керамика - light_gray_terracotta
+    cyan: [2, 2],       // Бирюзовая керамика - cyan_terracotta
+    purple: [1, 3],     // Фиолетовая керамика - purple_terracotta
+    blue: [0, 3],       // Синяя керамика - blue_terracotta
+    brown: [0, 1],      // Коричневая керамика - brown_terracotta
+    green: [1, 2],      // Зелёная керамика - green_terracotta
+    red: [1, 1],        // Красная керамика - red_terracotta
+    black: [3, 0],      // Чёрная керамика - black_terracotta
+};
+
 export class Resources {
 
     static async getModelAsset(key) {
@@ -36,6 +55,7 @@ export class Resources {
         this.codeMain           = {};
         this.codeSky            = {};
         this.pickat             = {};
+        this.shadow             = {};
         // this.sky                = {};
         this.clouds             = {};
         this.inventory          = {};
@@ -55,6 +75,7 @@ export class Resources {
         all.push(loadImage('media/rain.png').then((img) => { this.weather.rain = img}));
         all.push(loadImage('media/snow.png').then((img) => { this.weather.snow = img}));
         all.push(loadImage('media/pickat_target.png').then((img) => { this.pickat.target = img}));
+        all.push(loadImage('media/shadow.png').then((img) => { this.shadow.main = img}));
         all.push(loadImage('media/debug_frame.png').then((img) => { this.pickat.debug = img}));
         all.push(fetch('/data/sounds.json').then(response => response.json()).then(json => { this.sounds = json;}));
         all.push(fetch('/sounds/main/sprite.json').then(response => response.json()).then(json => { this.sound_sprite_main = json;}));
@@ -405,6 +426,9 @@ export class Resources {
                         break;
                     case 'wall':
                         all.push(import('./block_style/wall.js').then(module => {resp.add(module.default);}));
+                        break;
+                    case 'item_frame':
+                        all.push(import('./block_style/item_frame.js').then(module => {resp.add(module.default);}));
                         break;
                     case 'default':
                         all.push(import('./block_style/default.js').then(module => {resp.add(module.default);}));

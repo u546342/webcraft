@@ -67,14 +67,14 @@ export class BaseResourcePack {
         return this.shader;
     }
 
-    async _loadTexture (url, settings, renderBackend) {
+    async _loadTexture (url, settings, renderBackend, textureInfo) {
         const image = await Resources.loadImage(url, true);
 
         const texture = renderBackend.createTexture({
             source: await this.genMipMapTexture(image, settings),
             style: this.genTextureStyle(image, settings),
-            minFilter: 'nearest',
-            magFilter: 'nearest',
+            minFilter: textureInfo?.minFilter || 'nearest',
+            magFilter: textureInfo?.magFilter ||'nearest',
         });
 
         return {
@@ -144,7 +144,8 @@ export class BaseResourcePack {
             let resp = await this._loadTexture(
                 this.dir + textureInfo.image,
                 settings,
-                renderBackend
+                renderBackend,
+                textureInfo
             );
             image = resp.image;
             texture = resp.texture;
@@ -282,6 +283,7 @@ export class BaseResourcePack {
 
     // pushVertices
     pushVertices(vertices, block, world, pos, neighbours, biome, dirt_color, draw_style, force_tex, _matrix, _pivot) {
+
         const style = draw_style ? draw_style : block.material.style;
         const module = this.BLOCK.styles.get(style);
         if(!module) {

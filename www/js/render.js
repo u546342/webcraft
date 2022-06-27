@@ -1,6 +1,6 @@
 "use strict";
 
-import {Mth, CAMERA_MODE, DIRECTION, Helpers, Vector} from "./helpers.js";
+import {Mth, CAMERA_MODE, DIRECTION, Helpers, Vector, Color, calcRotateMatrix, fromMat3, QUAD_FLAGS} from "./helpers.js";
 import {CHUNK_SIZE_X} from "./chunk_const.js";
 import rendererProvider from "./renders/rendererProvider.js";
 import {FrustumProxy} from "./frustum.js";
@@ -19,9 +19,11 @@ import { MeshManager } from "./mesh_manager.js";
 import { Camera } from "./camera.js";
 import { InHandOverlay } from "./ui/inhand_overlay.js";
 import { Environment, PRESET_NAMES } from "./environment.js";
-import { RAINDROP_NEW_INTERVAL } from "./constant.js";
+import GeometryTerrain from "./geometry_terrain.js";
+import { BLEND_MODES } from "./renders/BaseRenderer.js";
+import { CubeSym } from "./core/CubeSym.js";
 
-const {mat4} = glMatrix;
+const {mat3, mat4} = glMatrix;
 
 /**
 * Renderer
@@ -82,6 +84,19 @@ export class Renderer {
         });
 
         this.inHandOverlay = null;
+
+        //
+        this.drop_item_meshes = Array(4096); // new Map();
+    }
+
+    //
+    addDropItemMesh(block_id, material_id, vertices) {
+        let div = this.drop_item_meshes[block_id]; // .get(block_id);
+        if(!div) {
+            div = {vertices: {}};
+            this.drop_item_meshes[block_id] = div;
+        }
+        div.vertices[material_id] = vertices;
     }
 
     nextCameraMode() {
@@ -200,6 +215,34 @@ export class Renderer {
         }
 
         this.generatePrev();
+        this.generateDropItemVertices();
+
+        world.chunkManager.postWorkerMessage(['setDropItemMeshes', this.drop_item_meshes]);
+        
+    }
+
+    // Generate drop item vertices
+    generateDropItemVertices() {
+        const all_blocks = BLOCK.getAll();
+        // Drop for item in frame
+        const frame_matrix = mat4.create();
+        mat4.rotateY(frame_matrix, frame_matrix, -Math.PI / 2);
+        all_blocks.forEach((mat) => {
+            if(mat.id < 1 || mat.deprecated) {
+                return;
+            }
+            const b = {id: mat.id};
+            //
+            let cardinal_direction = 0;
+            let mx = mat3.create();
+            let mx4 = fromMat3(new Float32Array(16), CubeSym.matrices[cardinal_direction]);
+            mat3.fromMat4(mx, mx4);
+            //
+            const drop = new Particles_Block_Drop(null, null, [b], Vector.ZERO, frame_matrix, null);
+            drop.mesh_group.meshes.forEach((mesh, _, map) => {
+                this.addDropItemMesh(drop.block.id, _, mesh.vertices);
+            });
+        });
     }
 
     generatePrev(callback) {
@@ -297,6 +340,8 @@ export class Renderer {
                     console.log(mesh)
                     debugger;
                 }
+
+                // this.addDropItemMesh(drop.block.id, _, mesh.vertices);
 
                 // use linear for inventory
                 mesh.material.texture.minFilter = 'linear';
@@ -532,7 +577,7 @@ export class Renderer {
         }
 
         if (this.player.currentInventoryItem) {
-            const block = BLOCK.BLOCK_BY_ID.get(this.player.currentInventoryItem.id);
+            const block = BLOCK.BLOCK_BY_ID[this.player.currentInventoryItem.id];
             const power = block.light_power_number;
             // and skip all block that have power greater that 0x0f
             // it not a light source, it store other light data
@@ -597,6 +642,8 @@ export class Renderer {
                     this.drawDropItems(delta);
                     // 6. Draw meshes
                     this.meshes.draw(this, delta);
+                    // 7. Draw shadows
+                    this.drawShadows();
                 }
             }
         }
@@ -725,6 +772,144 @@ export class Renderer {
         }
     }
 
+    // Draw shadows
+    drawShadows() {
+        const world = Game.world;
+        const TARGET_TEXTURES = [.5, .5, 1, 1];
+        // Material (shadow)
+        if(!this.material_shadow) {
+            const mat = this.renderBackend.createMaterial({
+                cullFace: false,
+                opaque: false,
+                blendMode: BLEND_MODES.MULTIPLY,
+                shader: this.defaultShader,
+            });
+            // Material
+            this.material_shadow = mat.getSubMat(this.renderBackend.createTexture({
+                source: Resources.shadow.main,
+                blendMode: BLEND_MODES.MULTIPLY,
+                minFilter: 'nearest',
+                magFilter: 'nearest',
+                textureWrapMode: 'clamp_to_edge'
+            }));
+        }
+        //
+        const a_pos = new Vector(0.5, 0.5, 0.5).addSelf(Game.player.blockPos);
+        // Build vertices for each player
+        const player_pos = Game.player.lerpPos;
+        const blockPosDiff = player_pos.sub(Game.player.blockPos);
+        const vertices = [];
+        const vec = new Vector();
+        const appendPos = (pos) => {
+            const shapes = [];
+            for(let x = -1; x <= 1; x++) {
+                for(let z = -1; z <= 1; z++) {
+                    for(let y = 0; y >= -2; y--) {
+                        vec.copyFrom(pos).addScalarSelf(x, y, z).flooredSelf();
+                        const block = world.getBlock(vec);
+                        if(!block?.material?.can_take_shadow) {
+                            continue;
+                        }
+                        const block_shapes = BLOCK.getShapes(vec, block, world, false, false);
+                        for(let i = 0; i < block_shapes.length; i++) {
+                            const s = [...block_shapes[i]];
+                            if(s[0] < 0) s[0] = 0;
+                            if(s[1] < 0) s[1] = 0;
+                            if(s[2] < 0) s[2] = 0;
+                            if(s[3] > 1) s[3] = 1;
+                            if(s[4] > 1) s[4] = 1;
+                            if(s[5] > 1) s[5] = 1;
+                            if(s[4] + y <= pos.y + .5) {
+                                s[0] += x;
+                                // s[1] += y;
+                                s[1] = (pos.y - a_pos.y - .5) - s[1] - y; // opacity value for shader
+                                s[2] += z;
+                                s[3] += x;
+                                s[4] += y + 1/500;
+                                s[5] += z;
+                                shapes.push(s);
+                                s[1] = Math.min(Math.max(1.3 - s[1], 0), 1) * .8;
+                                // const scale = 0.3;
+                                // s[0] -= (s[0] - (pos.x - Math.floor(pos.x) + x - .5)) * (1 - scale);
+                                // s[2] -= (s[2] - (pos.z - Math.floor(pos.z) + z - .5)) * (1 - scale);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            const player_vertices = [];
+            this.createShadowVertices(player_vertices, shapes, pos, TARGET_TEXTURES);
+            //if(player.username != Game.player.session.username) {
+                const dist = player_pos.sub(pos.flooredSelf()).subSelf(blockPosDiff)
+                for(let i = 0; i < player_vertices.length; i += GeometryTerrain.strideFloats) {
+                    player_vertices[i + 0] -= dist.x;
+                    player_vertices[i + 1] -= dist.z;
+                    player_vertices[i + 2] -= dist.y;
+                }
+            //}
+            vertices.push(...player_vertices);
+        };
+        // draw players shadow
+        for(let player of Game.world.players.list.values()) {
+            const pos = player.pos.clone();
+            appendPos(pos);
+        }
+        /*
+        // draw drop items shadow
+        for(let drop_item of Game.world.drop_items.list.values()) {
+            const pos = drop_item.pos.clone();
+            appendPos(pos);
+        }
+        */
+        // Create buffer, draw and destroy
+        const buf = new GeometryTerrain(vertices);
+        const modelMatrix = mat4.create();
+        this.renderBackend.drawMesh(buf, this.material_shadow, a_pos, modelMatrix);
+        buf.destroy();
+
+    }
+
+    // createShadowBuffer...
+    createShadowVertices(vertices, shapes, pos, c) {
+        let lm          = new Color(0, 0, (performance.now() / 1000) % 1);
+        let flags       = QUAD_FLAGS.QUAD_FLAG_OPACITY, sideFlags = 0, upFlags = 0;
+        for (let i = 0; i < shapes.length; i++) {
+            const shape = shapes[i];
+            let x1 = shape[0];
+            let y1 = shape[1];
+            let z1 = shape[2];
+            let x2 = shape[3];
+            let y2 = shape[4];
+            let z2 = shape[5];
+            let xw = x2 - x1; // ширина по оси X
+            let zw = z2 - z1; // ширина по оси Z
+            let x = -.5 + x1 + xw/2;
+            let y_top = -.5 + y2;
+            lm.b = y1;
+            let z = -.5 + z1 + zw/2;
+            //
+            let c0 = Math.floor(x1 + pos.x) + c[0];
+            let c1 = Math.floor(z1 + pos.z) + c[1];
+            const dist = Math.sqrt((pos.x - c0) * (pos.x - c0) + (pos.z - c1) * (pos.z - c1));
+            //
+            if(dist <= 1.1) {
+                c0 = pos.x - c0 - .5;
+                c1 = pos.z - c1 - .5;
+                //
+                // const scale = 0.3;
+                // xw *= scale;
+                // zw *= scale;
+                //
+                vertices.push(x, z, y_top,
+                    xw, 0, 0,
+                    0, zw, 0,
+                    -c0, -c1, c[2], c[3],
+                    lm.r, lm.g, lm.b, flags | upFlags);
+            }
+        }
+    }
+
     /**
     * Check if the viewport is still the same size and update
     * the render configuration if required.
@@ -760,9 +945,9 @@ export class Renderer {
     // pos - Position in world coordinates.
     // ang - Pitch, yaw and roll.
     setCamera(player, pos, rotate) {
-        
+
         const tmp = mat4.create();
-        
+
         // Shake camera on damage
         if(Game.hotbar.last_damage_time && performance.now() - Game.hotbar.last_damage_time < DAMAGE_TIME) {
             let percent = (performance.now() - Game.hotbar.last_damage_time) / DAMAGE_TIME;
@@ -911,6 +1096,10 @@ export class Renderer {
 
     downloadScreenshot() {
         this.make_screenshot = true;
+    }
+
+    downloadTextImage() {
+        Helpers.downloadImage(Game.world.block_manager.resource_pack_manager.list.get('base').materials.get('base/regular/alphabet').texture.source, 'alphabet.png');
     }
 
     downloadInventoryImage() {

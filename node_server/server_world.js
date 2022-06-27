@@ -78,17 +78,17 @@ export class ServerWorld {
 
     // Return world info
     getInfo() {
-        console.log(this.info);
-        this.updateWorldCalendar();
         return this.info;
     }
 
     // updateWorldCalendar
     updateWorldCalendar() {
-        this.info.calendar = {
-            age: null,
-            day_time: null,
-        };
+        if(!this.info.calendar) {
+            this.info.calendar = {
+                age: null,
+                day_time: null,
+            };    
+        }
         const currentTime = ((+new Date()) / 1000) | 0;
         // возраст в реальных секундах
         const diff_sec = currentTime - this.info.dt;
@@ -111,6 +111,7 @@ export class ServerWorld {
             delta = (performance.now() - this.pn) / 1000;
         }
         this.pn = performance.now();
+        this.updateWorldCalendar();
         //
         this.ticks_stat.number++;
         this.ticks_stat.start();
@@ -186,7 +187,7 @@ export class ServerWorld {
             await this.onLeave(existing_player);
         }
         // 2. Insert to DB if new player
-        player.init(await this.db.registerUser(this, player));
+        player.init(await this.db.registerPlayer(this, player));
         player.state.skin = skin;
         player.updateHands();
         await player.initQuests();
@@ -365,7 +366,6 @@ export class ServerWorld {
             this.chunks.get(drop_item.chunk_addr)?.addDropItem(drop_item);
             return true;
         } catch (e) {
-            console.log('e', e);
             let packets = [{
                 name: ServerClient.CMD_ERROR,
                 data: {
@@ -470,16 +470,13 @@ export class ServerWorld {
         if (actions.chat_message) {
             this.chat.sendMessage(server_player, actions.chat_message);
         }
-        // Create chest
-        if (actions.create_chest) {
-            const params = actions.create_chest;
-            params.item.extra_data = { can_destroy: true, slots: {} };
-            const b_params = { pos: params.pos, item: params.item, action_id: ServerClient.BLOCK_ACTION_CREATE };
-            actions.blocks.list.push(b_params);
-        }
         // Decrement item
         if (actions.decrement) {
-            server_player.inventory.decrement(actions.decrement);
+            server_player.inventory.decrement(actions.decrement, actions.ignore_creative_game_mode);
+        }
+        // Decrement (extended)
+        if (actions.decrement_extended) {
+            server_player.inventory.decrementExtended(actions.decrement_extended);
         }
         // Decrement instrument
         if (actions.decrement_instrument) {
@@ -761,6 +758,28 @@ export class ServerWorld {
             }
         }
         return Array.from(resp.values());
+    }
+
+    // Return bee nests near pos by distance
+    getBeeNestsNear(pos, max_distance) {
+        const resp = [];
+        for(const addr of this.chunkManager.ticking_chunks.keys()) {
+            const chunk = this.chunkManager.get(addr);
+            if(chunk) {
+                for(const [_, ticking_block] of chunk.ticking_blocks.blocks.entries()) {
+                    if(ticking_block.ticking.type == 'bee_nest') {
+                        const tblock = this.getBlock(ticking_block.pos);
+                        if(tblock && tblock.id > 0 && tblock.hasTag('bee_nest')) {
+                            const dist = tblock.posworld.distance(pos);
+                            if(dist <= max_distance) {
+                                resp.push(tblock);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return resp;
     }
 
 }

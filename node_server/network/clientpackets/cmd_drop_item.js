@@ -1,3 +1,4 @@
+import { Vec3, Vector } from "../../../www/js/helpers.js";
 import { ServerClient } from "../../../www/js/server_client.js";
 
 export default class packet_reader {
@@ -17,7 +18,6 @@ export default class packet_reader {
         if(!player.game_mode.canDropItems()) {
             return true;
         }
-        //
         player.inventory.dropItem();
         return true;
     }

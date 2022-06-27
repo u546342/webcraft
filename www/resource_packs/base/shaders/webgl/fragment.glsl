@@ -25,13 +25,18 @@ vec4 sampleAtlassTexture (vec4 mipData, vec2 texClamped, vec2 biomPos) {
 
     vec4 color = texture(u_texture, texc * mipData.zw + mipData.xy);
 
-    if (v_color.r >= 0.0) {
-        vec4 color_mask = texture(u_texture, vec2(texc.x + u_blockSize * max(v_color.b, 1.), texc.y) * mipData.zw + mipData.xy);
+    if (v_color.r > 0.0) {
+        float mask_shift = v_color.b * 32.;
+        vec4 color_mask = texture(u_texture, vec2(texc.x + u_blockSize * max(mask_shift, 1.), texc.y) * mipData.zw + mipData.xy);
         vec4 color_mult = texture(u_texture, biomPos);
         color.rgb += color_mask.rgb * color_mult.rgb;
     }
 
     return color;
+}
+
+float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
 }
 
 void main() {
@@ -42,12 +47,20 @@ void main() {
     vec2 biome = v_color.rg * (1. - 0.5 * step(0.5, u_mipmap));
 
     float light = 0.0;
+    // Read texture
+    vec4 color = sampleAtlassTexture (mipData, texClamped, biome);
 
     // Game
-    if(u_fogOn) {
+    if(v_flagQuadSDF == 1.) {
 
-        // Read texture
-        vec4 color = sampleAtlassTexture (mipData, texClamped, biome);
+        vec4 u_color = vec4(1, 1, 1, 1);
+        float dist = color.b;
+        if(dist < .5) discard;
+        color = u_color;
+
+    }
+    
+    if(u_fogOn) {
 
         if (v_animInterp > 0.0) {
             color = mix(
@@ -57,21 +70,28 @@ void main() {
             );
         }
 
-        if(color.a < 0.1) discard;
-        if (u_opaqueThreshold > 0.1) {
-            if (color.a < u_opaqueThreshold) {
-                discard;
-            } else {
-                color.a = 1.0;
+        if(v_flagFlagOpacity != 0.) {
+            color.a *=  v_color.b;
+        } else {
+            if(color.a < 0.1) discard;
+            if (u_opaqueThreshold > 0.1) {
+                if (color.a < u_opaqueThreshold) {
+                    discard;
+                } else {
+                    color.a = 1.0;
+                }
             }
         }
 
-        #include<local_light_pass>
-        #include<ao_light_pass>
-        #include<sun_light_pass>
+        if(v_noCanTakeAO == 0.) {
+            #include<local_light_pass>
+            #include<ao_light_pass>
+            #include<sun_light_pass>
 
-        // Apply light
-        color.rgb *= light;
+            // Apply light
+            color.rgb *= light;
+        }
+
         outColor = color;
 
         #include<fog_frag>

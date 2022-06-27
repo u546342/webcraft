@@ -5,8 +5,11 @@ Minecraft clone on JS
 - Discord: https://discord.gg/QQw2zadu3T
 - Youtube: https://www.youtube.com/channel/UCAcOZMpzYE8rk62giMgTwdw/videos
 - Reddit: https://www.reddit.com/r/madcraft/
-- 
-# Run and play
+
+## Third Party
++ [XM player](https://github.com/a1k0n/jsxm/)
+
+## Run and play
 ```
 // Run NodeJS v17.9.0 server!
 cd ./node_server
@@ -14,7 +17,7 @@ npm run install-all
 npm run start-rebuild
 ```
 
-# Commands
+## Commands
 ```JS
 // Teleport current user to random location 
 Game.player.teleport('random', null);
@@ -61,7 +64,7 @@ Game.player.chat.sendMessage('/spawnmob 3880 71 2527 bee base');
 /admin remove username
 ```
 
-# Server packets
+## Server packets
 Send particle animation from server to player:
 ```JS
 const packets = [{
@@ -73,5 +76,3 @@ const packets = [{
 }];
 chunk.sendAll(packets, []);
 ```
-
-XM player: https://github.com/a1k0n/jsxm/
