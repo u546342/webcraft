@@ -18,8 +18,18 @@ const admin_ctrl = async function($scope, $timeout) {
                     $scope.players.visible = false;
                     $scope.info = player;
                     $scope.info.visible = true;
-                    
-                    console.log(player);
+                });
+            });
+        },
+        update: function(id, page) {
+            $scope.App.ListPlayers({id: id, page: page}, (players) => {
+                $timeout(() => {
+                    $scope.worlds.visible = false;
+                    $scope.info.visible = false;
+                    $scope.players.visible = true;
+                    $scope.players.rows = players.rows;
+                    $scope.players.pagin = players.pagin;
+                    $scope.players.count = players.count;
                 });
             });
         }
@@ -27,25 +37,15 @@ const admin_ctrl = async function($scope, $timeout) {
     
     $scope.worlds = {
         visible: true,
-        submit: function() {
+        update: function(page) {
             $scope.worlds.visible = true;
             $scope.players.visible = false;
             $scope.info.visible = false;
-            $scope.App.ListWorlds({}, (worlds) => {
+            $scope.App.ListWorlds({page: page}, (worlds) => {
                 $timeout(() => {
-                    $scope.worlds.list = worlds.list;
-                    $scope.worlds.count = worlds.length;
-                });
-            });
-        },
-        info: function(id) {
-            $scope.App.ListPlayers({id: id}, (players) => {
-                $timeout(() => {
-                    $scope.worlds.visible = false;
-                    $scope.info.visible = false;
-                    $scope.players.visible = true;
-                    $scope.players.list = players;
-                    $scope.players.count = players.length;
+                    $scope.worlds.rows = worlds.rows;
+                    $scope.worlds.pagin = worlds.pagin;
+                    $scope.worlds.count = worlds.count;
                 });
             });
         }

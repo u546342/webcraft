@@ -2,6 +2,7 @@ import express from "express";
 import { DBWorld } from './db_world.js';
 
 const FLAG_SYSTEM_ADMIN = 256;
+const TABLE_COUNT_ROWS = 12;
 
 export class ServerAPI {
     
@@ -85,8 +86,15 @@ export class ServerAPI {
                     }
                     //Список миров
                     case '/api/Admin/ListWorlds': {
+                        let data = {
+                            rows: [],
+                            count: 0,
+                            pagin:[]
+                        };
+                        
+                        const page = parseInt(req.body.page) || 0;
                         const session = await Game.db.GetPlayerSession(req.get('x-session-id'));
-                        let result = await Game.db.getListWorlds(session.user_id);
+                        const result = await Game.db.getListWorlds(session.user_id);
                         for (const row of result) {
                             row.online = 0;
                             row.chunks = 0;
@@ -97,24 +105,35 @@ export class ServerAPI {
                                 row.chunks = world.chunks.all.size;
                                 row.online = world.players.size;
                             }
+                            data.rows.push(row);
                         }
                         
-                        let data = {rows:[]};
+                        data.count = data.rows.length;
                         
-                        for (let i = 0; i < 20; i) {
-                             for (const row of result) {
-                                data.rows.push(row);
-                             }
+                        data.rows.sort(function(a, b) {
+                            return b.online - a.online;
+                        });
+                        
+                        data.rows = data.rows.slice(TABLE_COUNT_ROWS * page, TABLE_COUNT_ROWS * ( page + 1));
+                        
+                        for (let i = 0; i < Math.ceil(data.count / TABLE_COUNT_ROWS); i++) {
+                            data.pagin.push({
+                                'id': i,
+                            })
                         }
-                        
                         res.status(200).json(data);
                         break;
                     }
                     //Список пользователей в мире
                     case '/api/Admin/ListPlayers': {
+                        const page = parseInt(req.body.page) || 0;
                         const session = await Game.db.GetPlayerSession(req.get('x-session-id'));
                         const world = await Game.db.getWorldById(req.body.id, session.user_id);
-                        let result = [];
+                        let data = {
+                            rows: [],
+                            count: 0,
+                            pagin:[]
+                        };
                         if (world) {
                             const db = await DBWorld.openDB("../world/" + world.guid, null);
                             if (db) {
@@ -132,7 +151,7 @@ export class ServerAPI {
                                             items++;
                                         }
                                     }
-                                    result.push({
+                                    data.rows.push({
                                         'id': info.id,
                                         'world': world.id,
                                         'username': info.username,
@@ -143,7 +162,18 @@ export class ServerAPI {
                                 }
                             }
                         }
-                        res.status(200).json(result);
+                        
+                        data.count = data.rows.length;
+                        
+                        data.rows = data.rows.slice(TABLE_COUNT_ROWS * page, TABLE_COUNT_ROWS * ( page + 1));
+                        
+                        for (let i = 0; i < Math.ceil(data.count / TABLE_COUNT_ROWS); i++) {
+                            data.pagin.push({
+                                'id': i,
+                            })
+                        }
+                        
+                        res.status(200).json(data);
                         break;
                     }
                     //Информация об игроке
@@ -160,6 +190,7 @@ export class ServerAPI {
                         res.status(200).json(result);
                         break;
                     }
+   
                     default: {
                         throw 'error_method_not_exists';
                         break;

@@ -21,12 +21,12 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
-                        <a class="nav-link" href="#" ng-click="worlds.submit()">Список миров</a>
+                        <a class="nav-link" href="#" ng-click="worlds.update(0)">Список миров</a>
                     </li>
                 </ul>
             </div>
         </nav>
-        <div class="container" ng-init="worlds.submit()">
+        <div class="container" ng-init="worlds.update(0)">
             <div class="card" ng-if="worlds.visible">
                 <div class="card-header">
                     Активные миры (<span id="count">{{ worlds.count }}</span>)
@@ -43,18 +43,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="world in worlds.list">
+                            <tr ng-repeat="world in worlds.rows">
                                 <td>{{ world.title }}</td>
                                 <td>{{ world.online }}/{{ world.players }}</td>
                                 <td>{{ world.chunks }}</td>
                                 <td>{{ world.seed }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-info" ng-click="worlds.info(world.id)">
+                                    <button type="button" class="btn btn-info" ng-click="players.update(world.id, 0)">
                                         i
                                     </button>
                                 </tr>
                         </tbody>
                     </table>
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item" ng-repeat="pagin in worlds.pagin"><a class="page-link" href="#" ng-click="worlds.update(pagin.id)">{{ pagin.id + 1 }}</a></li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
             
@@ -74,7 +79,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="player in players.list">
+                            <tr ng-repeat="player in players.rows">
                                 <td>{{ player.username }}</td>
                                 <td>{{ player.is_admin ? "да" : "нет" }}</td>
                                 <td>{{ player.online ? "да" : "нет" }}</td>
@@ -87,6 +92,11 @@
                             </tr>
                         </tbody>
                     </table>
+                     <nav>
+                        <ul class="pagination">
+                            <li class="page-item" ng-repeat="pagin in players.pagin"><a class="page-link" href="#" ng-click="players.update(player.world, pagin.id)">{{ pagin.id + 1 }}</a></li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
             
