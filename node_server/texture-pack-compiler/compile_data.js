@@ -143,7 +143,7 @@ export class CompileData {
                 "can_rotate": true,
                 "inventory": {
                     "style": "extruder",
-                    "texture": "26|31"
+                    "texture": "14|30"
                 },
                 "mask_color": mask_color,
                 "tags": [
@@ -381,7 +381,7 @@ export class CompileData {
                     ]
                 },
                 "texture": {
-                    "id": "egg",
+                    "id": "default",
                     "side": `item/spawn_egg.png;type=${egg.type}` // disable cache for every egg
                 }
             };
