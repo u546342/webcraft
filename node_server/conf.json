@@ -3,6 +3,7 @@
     "AppCode": "madcraft",
     "ServerIP": "127.0.0.1",
     "Port": 5700,
+    "AdminPort": 5701,
     "Addr": ":5700",
     "JSONRPCEndpoint": "/api/",
     "ApiKey": "eeb5694b9bb20fc43ff234438ad26e34",

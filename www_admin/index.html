@@ -3,13 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>MadCraft admin</title>
-    <script src="angular.min.js"></script>
-    <script src="controller.js" type="module"></script>
+    <script src="js/angular.min.js"></script>
+    <script src="js/controller.js" type="module"></script>
+    <script src="js/bootstrap.min.js"></script> 
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/bootstrap.min.js"></script>
+     <link rel="stylesheet" href="css/style.css">
 </head>
-<body ng-controller="admin_ctrl">
-    <div id="adminka">
+<body ng-controller="admin_ctrl"  ng-init="login.init()">
+    <form class="form-signin text-center" ng-if="login.visible">
+        <img class="mb-4" src="media/2.png" alt="" width="72" height="72">
+        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+        <label class="sr-only">Email address</label>
+        <input type="text" ng-model="login.username" my-enter="login.submit()" placeholder="Login" required="" autofocus="" class="form-control">
+        <label class="sr-only">Password</label>
+        <input type="password" ng-model="login.password" my-enter="login.submit()" class="form-control" placeholder="Password" required="">
+        <div class="checkbox mb-3">
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="login.submit()">Sign in</button>
+    </form>
+    <div ng-if="!login.visible">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="#">
                 <img src="media/2.png" width="30" height="30" alt="">
@@ -23,10 +35,13 @@
                     <li class="nav-item active">
                         <a class="nav-link" href="#" ng-click="worlds.update(0)">Список миров</a>
                     </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#" ng-click="login.logout()">Выход</a>
+                    </li>
                 </ul>
             </div>
         </nav>
-        <div class="container" ng-init="worlds.update(0)">
+        <div class="container">
             <div class="card" ng-if="worlds.visible">
                 <div class="card-header">
                     Активные миры (<span id="count">{{ worlds.count }}</span>)
@@ -85,7 +100,7 @@
                                 <td>{{ player.online ? "да" : "нет" }}</td>
                                 <td>{{ player.items }} / 42</td>
                                 <td>
-                                    <button type="button" class="btn btn-info" ng-click="players.info(player.world, player.id)">
+                                    <button type="button" class="btn btn-info" ng-click="info.update(player.world, player.id)">
                                         i
                                     </button>
                                 </td>
