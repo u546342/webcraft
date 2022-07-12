@@ -167,7 +167,10 @@ export class FSMBrain {
         const body = world.getBlock(pos_body);
         const legs = world.getBlock(pos_legs);
         const under = world.getBlock(pos_under);
-        return { 'head': head, 'body': body, 'legs': legs, 'under': under }
+        if (!under || !legs || !body || !head) {
+            return null;
+        }
+        return { 'head': head, 'body': body, 'legs': legs, 'under': under };
     }
 
     findTarget() {
@@ -245,7 +248,7 @@ export class FSMBrain {
 
         const is_abyss = (block.legs.id == 0 && block.under.id == 0) ? true : false;
         const is_water_legs = (block.legs.material.is_fluid) ? true : false;
-        const is_fence = (block.body.material.style == "fence") ? true : false;
+        const is_fence = (block.body.material.style == "fence" || block.body.material.style == "wall") ? true : false;
         const is_wall = (block.head.id != 0 && !block.head.material.planting) ? true : false;
         if (is_wall || is_fence || is_abyss || is_water_legs) {
             this.rotate_angle = mob.rotate.z + (Math.PI / 2) + Math.random() * Math.PI / 2;
