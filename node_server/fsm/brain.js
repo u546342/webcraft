@@ -159,18 +159,14 @@ export class FSMBrain {
     getBeforeBlocks() {
         const mob = this.mob;
         const world = mob.getWorld();
-        const chunk_over = world.chunks.get(mob.chunk_addr);
-        if (!chunk_over) {
-            return null;
-        }
         const pos_head = mob.pos.add(new Vector(Math.sin(mob.rotate.z), this.height + 1, Math.cos(mob.rotate.z)));
         const pos_body = mob.pos.add(new Vector(Math.sin(mob.rotate.z), this.height / 2, Math.cos(mob.rotate.z)));
         const pos_legs = mob.pos.add(new Vector(Math.sin(mob.rotate.z), -1, Math.cos(mob.rotate.z)));
         const pos_under = mob.pos.add(new Vector(Math.sin(mob.rotate.z), -2, Math.cos(mob.rotate.z)));
-        const head = chunk_over.getBlock(pos_head);
-        const body = chunk_over.getBlock(pos_body);
-        const legs = chunk_over.getBlock(pos_legs);
-        const under = chunk_over.getBlock(pos_under);
+        const head = world.getBlock(pos_head);
+        const body = world.getBlock(pos_body);
+        const legs = world.getBlock(pos_legs);
+        const under = world.getBlock(pos_under);
         return { 'head': head, 'body': body, 'legs': legs, 'under': under }
     }
 
