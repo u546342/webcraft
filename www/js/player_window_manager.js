@@ -1,4 +1,4 @@
-import { ChargingStationWindow, ChestWindow, CraftTable, CreativeInventoryWindow, DieWindow, EditSignWindow, FurnaceWindow, InventoryWindow, NotImplementedWindow, QuestWindow, StatsWindow } from "./window/index.js";
+import { ChargingStationWindow, ChestWindow, CraftTable, CreativeInventoryWindow, DieWindow, EditSignWindow, FurnaceWindow, InventoryWindow, NotImplementedWindow, QuestWindow, StatsWindow, LoomWindow} from "./window/index.js";
 
 export class PlayerWindowManager {
 
@@ -17,6 +17,7 @@ export class PlayerWindowManager {
         this.addWindow(new QuestWindow(player));
         this.addWindow(new StatsWindow(player));
         this.addWindow(new DieWindow(player));
+        this.addWindow(new LoomWindow(inventory));
     }
 
     addWindow(w) {

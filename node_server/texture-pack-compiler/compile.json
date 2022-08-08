@@ -6670,6 +6670,22 @@
                 "a": 255
             },
             "texture": "block/shroomlight.png"
+        },
+        {
+            "id": 197,
+            "transparent": true,
+            "name": "LOOM",
+            "sound": "madcraft:block.stone",
+            "window": "frmLoom",
+            "material": {
+                "id": "iron"
+            },
+            "texture": {
+                "up": "block/loom_top.png",
+                "down": "block/loom_bottom.png",
+                "side": "block/loom_side.png",
+                "north": "block/loom_front.png"
+            }
         }
     ]
 }
