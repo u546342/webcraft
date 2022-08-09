@@ -6672,7 +6672,7 @@
             "texture": "block/shroomlight.png"
         },
         {
-            "id": 197,
+            "id": 211,
             "transparent": true,
             "name": "LOOM",
             "sound": "madcraft:block.stone",
@@ -6685,7 +6685,11 @@
                 "down": "block/loom_bottom.png",
                 "side": "block/loom_side.png",
                 "north": "block/loom_front.png"
-            }
+            },
+            "can_rotate": true,
+            "tags": [
+                "no_drop_ao"
+            ]
         }
     ]
 }

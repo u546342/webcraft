@@ -139,9 +139,9 @@ export class LoomWindow extends BaseCraftWindow {
     }
     
     createCraft(cell_size) {
-        this.color_slot = new LoomSlot(125, 100, cell_size, cell_size, 'lblLoomColorSlot', null, null, this);
-        this.pattern_slot = new LoomSlot(86, 172, cell_size, cell_size, 'lblLoomPatternSlot', null, null, this);
-        this.item_slot = new LoomSlot(44, 100, cell_size, cell_size, 'lblLoomItemSlot', null, null, this);
+        this.color_slot = new LoomSlot(62 * this.zoom, 50 * this.zoom, cell_size, cell_size, 'lblLoomColorSlot', null, null, this);
+        this.pattern_slot = new LoomSlot(44 * this.zoom, 88 * this.zoom, cell_size, cell_size, 'lblLoomPatternSlot', null, null, this);
+        this.item_slot = new LoomSlot(24 * this.zoom, 50 * this.zoom, cell_size, cell_size, 'lblLoomItemSlot', null, null, this);
         this.add(this.color_slot);
         this.add(this.pattern_slot);
         this.add(this.item_slot);
