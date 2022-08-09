@@ -6673,7 +6673,6 @@
         },
         {
             "id": 211,
-            "transparent": true,
             "name": "LOOM",
             "sound": "madcraft:block.stone",
             "window": "frmLoom",
@@ -6688,7 +6687,7 @@
             },
             "can_rotate": true,
             "tags": [
-                "no_drop_ao"
+                "lock_top_uv"
             ]
         }
     ]

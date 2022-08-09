@@ -379,6 +379,11 @@ export default class style {
                 autoUV = false;
             }
 
+            if(material.can_rotate && block.rotate && material.tags.indexOf('lock_top_uv') >= 0) {
+                axes_up = UP_AXES[(cardinal_direction + 1) % 4];
+                autoUV = false;
+            }
+
         }
 
         // Поворот текстуры травы в случайном направлении (для избегания эффекта мозаичности поверхности)
