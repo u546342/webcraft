@@ -46,13 +46,6 @@ void main() {
 
     v_normal = normalize((uModelMatrix * vec4(v_normal, 0.0)).xyz);
 
-    vec3 pos;
-    if(v_Mir2_Tex < .5) {
-        pos = a_position + (axisX * a_quad.x) + (axisY * a_quad.y);
-    } else {
-        pos = a_position + (axisX * -a_quad.y) + (axisY * -a_quad.x);
-    }
-
     // Scrolled textures
     if (flagScroll > 0) {
         vec2 sz = vec2(128.0, 512.0);
@@ -62,8 +55,14 @@ void main() {
         uvCenter1.y -= u_time / 1000.0 * v_color.g / sz.y;
     }
 
+    vec3 pos = a_position + (axisX * a_quad.x) + (axisY * a_quad.y);
+    if(v_Mir2_Tex < .5) {
+        v_texcoord0 = uvCenter0 + a_uvSize * a_quad;
+    } else {
+        v_texcoord0 = uvCenter0 + a_uvSize * vec2(-a_quad.y, -a_quad.x);
+    }
+
     //
-    v_texcoord0 = uvCenter0 + a_uvSize * a_quad;
     v_texClamp0 = vec4(uvCenter0 - abs(a_uvSize * 0.5) + u_pixelSize * 0.5, uvCenter0 + abs(a_uvSize * 0.5) - u_pixelSize * 0.5);
     v_texcoord1_diff = uvCenter1 - uvCenter0;
 
@@ -77,7 +76,8 @@ void main() {
     v_world_pos = v_chunk_pos + u_add_pos;
     v_position = (u_worldView * vec4(v_world_pos, 1.0)). xyz;
     gl_Position = uProjMatrix * vec4(v_position, 1.0);
-    if(v_Triangle >= .5 && gl_VertexID > 2) {
+    if(v_Triangle >= .5 && (gl_VertexID > 2 && v_Mir2_Tex < .5
+        || gl_VertexID < 1 && v_Mir2_Tex > .5)) {
         gl_Position = vec4(0.0, 0.0, -2.0, 1.0);
     }
 
