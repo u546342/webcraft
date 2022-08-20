@@ -6732,6 +6732,24 @@
                 "down": "block/obsidian.png",
                 "east": "entity/beacon_beam.png"
             }
+        },
+        {
+            "id": 232,
+            "name": "SLIME",
+            "transparent": true,
+            "sound": "madcraft:block.gravel",
+            "tags": [
+                "dirt"
+            ],
+            "material": {
+                "id": "dirt"
+            },
+            "ticking": {
+                "type": "dirt"
+            },
+            "texture": {
+                "side": "block/slime_block.png"
+            }
         }
     ]
 }
