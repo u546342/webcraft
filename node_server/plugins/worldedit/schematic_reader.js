@@ -338,6 +338,21 @@ export class SchematicReader {
                         new_block.rotate.y = 0;
                     }
                 }
+                // attachment (after facing!)
+                if('attachment' in props) {
+                    new_block.rotate = new_block.rotate ?? new Vector(0, 0, 0);
+                    switch(props.attachment) {
+                        case 'floor': {
+                            new_block.rotate.y = 1;
+                            break;
+                        }
+                        case 'ceiling': {
+                            new_block.rotate.y = -1;
+                            break;
+                        }
+                    }
+                }
+
             }
             // trapdoors and doors
             // top|bottom|lower|upper
