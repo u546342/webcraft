@@ -6837,25 +6837,17 @@
             "material": {
                 "id": "iron"
             },
+            "tags": [
+                "no_drop_ao"
+            ],
+            "inventory": {
+                "style": "extruder",
+                "texture": "item/bell.png"
+            },
             "texture": {
                 "up": "block/bell_top.png",
                 "side": "block/bell_side.png",
                 "down": "block/bell_bottom.png"
-            },
-            "can_rotate": true
-        },
-        {
-            "id": 503,
-            "transparent": true,
-            "name": "BELL2",
-            "sound": "madcraft:block.stone",
-            "style": "bell",
-            "material": {
-                "id": "iron"
-            },
-            "texture": {
-                "up": "block/damaged_anvil_top.png",
-                "side": "block/anvil.png"
             },
             "can_rotate": true
         }

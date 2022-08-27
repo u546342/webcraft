@@ -1530,5 +1530,29 @@
             "item": "madcraft:flint_and_steel",
             "count": 1
         }
+    },
+    {
+        "id": "27300463-df71-4d44-b80a-273b87c0ca47",
+        "type": "madcraft:crafting_shaped",
+        "pattern": [
+            "WWW",
+            "SGS",
+            "S S"
+        ],
+        "key": {
+            "W": {
+                "item": ["madcraft:oak_log", "madcraft:birch_log", "madcraft:spruce_log", "madcraft:acacia_log", "madcraft:jungle_log", "madcraft:dark_oak_log"]
+            },
+            "S": {
+                "item": "madcraft:stone"
+            }, 
+            "G": {
+                "item": "madcraft:gold_block"
+            }
+        },
+        "result": {
+            "item": "madcraft:bell",
+            "count": 1
+        }
     }
 ]
