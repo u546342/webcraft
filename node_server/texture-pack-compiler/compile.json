@@ -6969,6 +6969,27 @@
                 "id": "stone"
             },
             "texture": "block/gilded_blackstone.png"
+        },
+        {
+            "id": 504,
+            "name": "GRINDSTONE",
+            "transparent": true,
+            "name": "ANVIL",
+            "sound": "madcraft:block.stone",
+            "window": "frmGrindstone",
+            "style": "grindstone",
+            "material": {
+                "id": "iron"
+            },
+            "texture": {
+                "up": "block/grindstone_round.png",
+                "side": "block/grindstone_side.png",
+                "bottom": "block/grindstone_pivot.png"
+            },
+            "can_rotate": true,
+            "tags": [
+                "no_drop_ao"
+            ]
         }
     ]
 }
