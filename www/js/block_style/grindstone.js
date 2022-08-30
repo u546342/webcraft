@@ -6,7 +6,7 @@ import glMatrix from "../../vendors/gl-matrix-3.3.min.js"
 
 const {mat4} = glMatrix;
 
-// Наковальня
+// точильный камень
 export default class style {
     
     static getRegInfo() {
@@ -19,7 +19,7 @@ export default class style {
     
     static computeAABB(block, for_physic) {
         const aabb = new AABB();
-        aabb.set(0, 0, 0, 1, 1, 1);
+        aabb.set(0.12, 0, 0.12, 0.88, 1, 0.88);
         return [aabb];
     }
     
@@ -33,7 +33,6 @@ export default class style {
         const side = BLOCK.calcTexture(texture, DIRECTION.WEST);
         const piv = BLOCK.calcTexture(texture, DIRECTION.DOWN);
         const planks = BLOCK.calcTexture(BLOCK.DARK_OAK_LOG.texture, DIRECTION.UP);
-        
         const flag = 0;
         const parts = [];
         parts.push(...[
@@ -41,7 +40,7 @@ export default class style {
                 "size": {"x": 2, "y": 7, "z": 4},
                 "translate": {"x": 5, "y": -4.5, "z": 0},
                 "faces": {
-                    "bottom": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "down": {"uv": [12, 9], "flag": flag, "texture": planks},
                     "north": {"uv": [12, 9], "flag": flag, "texture": planks},
                     "south": {"uv": [4, 8], "flag": flag, "texture": planks},
                     "west":  {"uv": [12, 9], "flag": flag, "texture": planks},
@@ -52,7 +51,7 @@ export default class style {
                 "size": {"x": 2, "y": 7, "z": 4},
                 "translate": {"x": -5, "y": -4.5, "z": 0},
                 "faces": {
-                    "bottom": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "down": {"uv": [12, 9], "flag": flag, "texture": planks},
                     "north": {"uv": [12, 9], "flag": flag, "texture": planks},
                     "south": {"uv": [4, 8], "flag": flag, "texture": planks},
                     "west":  {"uv": [12, 9], "flag": flag, "texture": planks},
@@ -63,10 +62,10 @@ export default class style {
                 "size": {"x": 2, "y": 6, "z": 6},
                 "translate": {"x": 5, "y": 2, "z": 0},
                 "faces": {
-                    "bottom": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "up": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "north": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "south": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "down": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "up": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "north": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "south": {"uv": [7, 3], "flag": flag, "texture": piv},
                     "east":  {"uv": [3, 3], "flag": flag, "texture": piv}
                 }
             },
@@ -74,10 +73,10 @@ export default class style {
                 "size": {"x": 2, "y": 6, "z": 6},
                 "translate": {"x": -5, "y": 2, "z": 0},
                 "faces": {
-                    "bottom": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "up": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "north": {"uv": [3, 3], "flag": flag, "texture": piv},
-                    "south": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "down": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "up": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "north": {"uv": [7, 3], "flag": flag, "texture": piv},
+                    "south": {"uv": [7, 3], "flag": flag, "texture": piv},
                     "west":  {"uv": [3, 3], "flag": flag, "texture": piv}
                 }
             },
@@ -85,7 +84,7 @@ export default class style {
                 "size": {"x": 8, "y": 12, "z": 12},
                 "translate": {"x": 0, "y": 2, "z": 0},
                 "faces": {
-                    "bottom": {"uv": [4, 6], "flag": flag, "texture": up},
+                    "down": {"uv": [4, 6], "flag": flag, "texture": up},
                     "up": {"uv": [4, 6], "flag": flag, "texture": up},
                     "west": {"uv": [6, 6], "flag": flag, "texture": side},
                     "east": {"uv": [6, 6], "flag": flag, "texture": side},
