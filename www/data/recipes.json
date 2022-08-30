@@ -1530,5 +1530,29 @@
             "item": "madcraft:flint_and_steel",
             "count": 1
         }
+    },
+    {
+        "id": "1b58d4f6-7a85-462c-b673-4d89cbed3a19",
+        "type": "madcraft:crafting_shaped",
+        "pattern": [
+            "STS",
+            "P P",
+            "   "
+        ],
+        "key": {
+            "S": {
+                "item": "madcraft:stick"
+            },
+            "T": {
+                "item": "madcraft:stone_slab"
+            },
+            "P": {
+                "item": ["madcraft:oak_planks", "madcraft:birch_planks", "madcraft:spruce_planks", "madcraft:acacia_planks", "madcraft:jungle_planks", "madcraft:dark_oak_planks"]
+            }
+        },
+        "result": {
+            "item": "madcraft:grindstone",
+            "count": 1
+        }
     }
 ]
