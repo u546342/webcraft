@@ -6974,7 +6974,6 @@
             "id": 504,
             "name": "GRINDSTONE",
             "transparent": true,
-            "name": "ANVIL",
             "sound": "madcraft:block.stone",
             "window": "frmGrindstone",
             "style": "grindstone",
@@ -6984,7 +6983,7 @@
             "texture": {
                 "up": "block/grindstone_round.png",
                 "side": "block/grindstone_side.png",
-                "bottom": "block/grindstone_pivot.png"
+                "down": "block/grindstone_pivot.png"
             },
             "can_rotate": true,
             "tags": [

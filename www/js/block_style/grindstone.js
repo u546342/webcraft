@@ -31,46 +31,67 @@ export default class style {
         const texture = block.material.texture;
         const up = BLOCK.calcTexture(texture, DIRECTION.UP);
         const side = BLOCK.calcTexture(texture, DIRECTION.WEST);
-        const front = BLOCK.calcTexture(texture, DIRECTION.NORTH);
-        const base = BLOCK.calcTexture(texture, DIRECTION.DOWN);
-        const bottom = BLOCK.calcTexture(BLOCK.OAK_PLANKS.texture, DIRECTION.UP);
+        const piv = BLOCK.calcTexture(texture, DIRECTION.DOWN);
+        const planks = BLOCK.calcTexture(BLOCK.DARK_OAK_LOG.texture, DIRECTION.UP);
+        
         const flag = 0;
         const parts = [];
         parts.push(...[
             {
-                "size": {"x": 8, "y": 13, "z": 8},
-                "translate": {"x": 0, "y": 0.5, "z": 0},
+                "size": {"x": 2, "y": 7, "z": 4},
+                "translate": {"x": 5, "y": -4.5, "z": 0},
                 "faces": {
-                    "north": {"uv": [12, 9], "flag": flag, "texture": front},
-                    "south": {"uv": [4, 8], "flag": flag, "texture": front},
-                    "west":  {"uv": [12, 9], "flag": flag, "texture": front},
-                    "east":  {"uv": [12, 9], "flag": flag, "texture": front}
+                    "bottom": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "north": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "south": {"uv": [4, 8], "flag": flag, "texture": planks},
+                    "west":  {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "east":  {"uv": [12, 9], "flag": flag, "texture": planks}
                 }
             },
             {
-                "size": {"x": 16, "y": 2, "z": 16},
-                "translate": {"x": 0, "y": -7, "z": 0},
+                "size": {"x": 2, "y": 7, "z": 4},
+                "translate": {"x": -5, "y": -4.5, "z": 0},
                 "faces": {
-                    "up": {"uv": [8, 8], "flag": flag, "texture": base},
-                    "down": {"uv": [8, 8], "flag": flag, "texture": bottom},
-                    "north": {"uv": [6, 1.5], "flag": flag, "texture": base},
-                    "south": {"uv": [8, 13], "flag": flag, "texture": base},
-                    "west":  {"uv": [6, 1.5], "flag": flag, "texture": base},
-                    "east":  {"uv": [6, 1.5], "flag": flag, "texture": base}
+                    "bottom": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "north": {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "south": {"uv": [4, 8], "flag": flag, "texture": planks},
+                    "west":  {"uv": [12, 9], "flag": flag, "texture": planks},
+                    "east":  {"uv": [12, 9], "flag": flag, "texture": planks}
                 }
             },
             {
-                "size": {"x": 16, "y": 4, "z": 13},
-                "translate": {"x": 0, "y": 6, "z": 1.5},
+                "size": {"x": 2, "y": 6, "z": 6},
+                "translate": {"x": 5, "y": 2, "z": 0},
                 "faces": {
-                    "up": { "uv": [8, 8], "flag": flag, "texture": up},
-                    "down": {"uv": [8, 8], "flag": flag, "texture": bottom},
-                    "north": {"uv": [12, 8], "flag": flag, "texture": side},
-                    "south": {"uv": [8, 8], "flag": flag, "texture": side},
-                    "west":  {"uv": [8, 8], "flag": flag, "texture": side},
-                    "east":  {"uv": [8, 8], "flag": flag, "texture": side}
-                },
-                "rot": [Math.PI / 12, 0, 0]
+                    "bottom": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "up": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "north": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "south": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "east":  {"uv": [3, 3], "flag": flag, "texture": piv}
+                }
+            },
+            {
+                "size": {"x": 2, "y": 6, "z": 6},
+                "translate": {"x": -5, "y": 2, "z": 0},
+                "faces": {
+                    "bottom": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "up": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "north": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "south": {"uv": [3, 3], "flag": flag, "texture": piv},
+                    "west":  {"uv": [3, 3], "flag": flag, "texture": piv}
+                }
+            },
+            {
+                "size": {"x": 8, "y": 12, "z": 12},
+                "translate": {"x": 0, "y": 2, "z": 0},
+                "faces": {
+                    "bottom": {"uv": [4, 6], "flag": flag, "texture": up},
+                    "up": {"uv": [4, 6], "flag": flag, "texture": up},
+                    "west": {"uv": [6, 6], "flag": flag, "texture": side},
+                    "east": {"uv": [6, 6], "flag": flag, "texture": side},
+                    "south":  {"uv": [4, 6], "flag": flag, "texture": up},
+                    "north":  {"uv": [4, 6], "flag": flag, "texture": up}
+                }
             }
         ]);
         const cd = block.getCardinalDirection();
