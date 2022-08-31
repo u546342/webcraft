@@ -58,40 +58,6 @@ class GrindstoneSlot extends CraftTableSlot {
     getResult(create) {
         const first_item = this.ct.first_slot.getItem();
         const second_item = this.ct.second_slot.getItem();
-        /*const label = this.ct.lbl_edit.buffer.join('');
-        if (!first_item || first_item.count != 1) {
-            this.ct.lbl_edit.buffer = [];
-            this.ct.state = false;
-            this.ct.result_slot.setItem(null);
-        } else {
-            if (!second_item) {
-                if (!first_item?.extra_data?.label || first_item.extra_data.label != label) {
-                    this.ct.state = true;
-                    this.ct.result_slot.setItem(first_item);
-                    if (create) {
-                        const item = this.ct.result_slot.getItem();
-                        if (!item?.extra_data) {
-                            item.extra_data = {label: ""};
-                        }
-                        item.extra_data.label = label;
-                        item.entity_id = randomUUID();
-                        this.ct.lbl_edit.buffer = [];
-                    }
-                } else {
-                    this.ct.state = false;
-                    this.ct.result_slot.setItem(null);
-                }
-            } else {
-                if (second_item.id == first_item.id) {
-                    //to do починка
-                    this.ct.state = true;
-                    this.ct.result_slot.setItem(first_item);
-                } else {
-                    this.ct.state = false;
-                    this.ct.result_slot.setItem(null);
-                }
-            }
-        }*/
     }
     
 }
@@ -118,8 +84,8 @@ export class GrindstoneWindow extends BaseCraftWindow {
                     mode: 'stretch',
                     x: 0,
                     y: 0,
-                    width: 350,
-                    height: 330
+                    width: 350 * 2,
+                    height: 330 * 2
                 }
             }
         };
@@ -206,7 +172,7 @@ export class GrindstoneWindow extends BaseCraftWindow {
             if(typeof this.style.background.image == 'object') {
                 const x = ax + this.x;
                 const y = ay + this.y;
-                const arrow = {x: 354, y: 0, width: 112, height: 80, tox: 188 * this.zoom, toy: 60 * this.zoom};
+                const arrow = {x: 704, y: 0, width: 112, height: 80, tox: 188 * this.zoom, toy: 60 * this.zoom};
                 ctx.drawImage(
                     this.style.background.image,
                     arrow.x,
@@ -215,8 +181,8 @@ export class GrindstoneWindow extends BaseCraftWindow {
                     arrow.height,
                     x + arrow.tox,
                     y + arrow.toy,
-                    arrow.width * this.zoom,
-                    arrow.height * this.zoom
+                    arrow.width * this.zoom / 2,
+                    arrow.height * this.zoom / 2
                 );
             }
         }
