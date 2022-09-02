@@ -549,7 +549,9 @@
                 * (cubeArr[7-i].z * (1.0 - interp.z) + cubeArr[i].z * interp.z);
             vec3 norm = (normalSample[i].xyz * 255.0 - 128.0) / 8.0;
             norm += vec3(iCoord[i]) - normalCoord;
-            norm += max(0.0, -dot(norm, v_normal)) * v_normal;
+            norm += (max(0.0, -dot(norm, v_normal)) + 1.0) * v_normal;
+            norm /= max(length(norm), 0.1);
+
             caveNormal += norm * weight;
             total += weight;
         }
@@ -562,7 +564,6 @@
 
     uvNormal = normalize(uvNormal);
     vec3 surfaceNormal = v_axisU * uvNormal.x + v_axisV * uvNormal.y + v_normal * uvNormal.z;
-    caveNormal += v_normal;
 
     combinedLight = lutColor;
 
@@ -570,7 +571,7 @@
     cavePart = min(1.5 * cavePart, 1.0) / sumCaveDay;
 
     combinedLight *= dayPart * sunNormalLight * (1.0 - aoSample)
-        + cavePart * max(0.5, dot(caveNormal, surfaceNormal) / length(caveNormal))
+        + cavePart * max(0.5, dot(caveNormal, surfaceNormal))
         * (1.0 - aoSample * 0.5);
     //  + cavePart * abs(caveNormal) / length(caveNormal);
     sunNormalLight = 1.0;
