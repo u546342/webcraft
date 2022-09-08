@@ -4,8 +4,8 @@ import { AABB } from '../core/AABB.js';
 import { default as default_style } from './default.js';
 import glMatrix from '../../vendors/gl-matrix-3.3.min.js';
 
-const {mat4} = glMatrix;
-
+const {mat4}      = glMatrix;
+const BLOCK_CACHE = Array.from({length: 6}, _ => new TBlock(null, new Vector(0, 0, 0)));
 // fire
 export default class style {
 
@@ -19,6 +19,12 @@ export default class style {
     }
     
     static computeAABB(block, for_physic) {
+        if (for_physic) {
+            return [];
+        }
+        
+        const neighbours    = block.tb.getNeighbours(block, null, BLOCK_CACHE);
+        if ()
         return [];
     }
 
