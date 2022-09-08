@@ -3,6 +3,7 @@ import { BLOCK } from '../blocks.js';
 import { AABB } from '../core/AABB.js';
 import { default as default_style } from './default.js';
 import glMatrix from '../../vendors/gl-matrix-3.3.min.js';
+import { TBlock } from '../typed_blocks3.js';
 
 const {mat4}      = glMatrix;
 const BLOCK_CACHE = Array.from({length: 6}, _ => new TBlock(null, new Vector(0, 0, 0)));
@@ -22,10 +23,25 @@ export default class style {
         if (for_physic) {
             return [];
         }
-        
-        const neighbours    = block.tb.getNeighbours(block, null, BLOCK_CACHE);
-        if ()
-        return [];
+        const facets     = [];
+        const neighbours = block.tb.getNeighbours(block, null, BLOCK_CACHE);
+        if (neighbours.DOWN.id != BLOCK.AIR.id && neighbours.DOWN.id != BLOCK.FIRE.id) {
+            facets.push(new AABB().set(0, 0, 0, 1, 0.06, 1));
+        } else {
+            if (neighbours.WEST.material.flammable) {
+                facets.push(new AABB().set(0, 0, 0, 0.06, 1, 1));
+            }
+            if (neighbours.EAST.material.flammable) {
+                facets.push(new AABB().set(0.94, 0, 0, 1, 1, 1));
+            }
+            if (neighbours.NORTH.material.flammable) {
+                facets.push(new AABB().set(0, 0, 0.94, 1, 1, 1));
+            }
+            if (neighbours.SOUTH.material.flammable) {
+                facets.push(new AABB().set(0, 0, 0, 1, 1, 0.06));
+            }
+        }
+        return facets;
     }
 
     // Build function
