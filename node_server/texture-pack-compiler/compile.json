@@ -3994,7 +3994,11 @@
             "material": {
                 "id": "food"
             },
-            "texture": "item/carrot.png"
+            "texture": "item/carrot.png",
+            "food": {
+                "amount": 3, 
+                "saturation": 0.6
+            }
         },
         {
             "id": 613,
@@ -4005,7 +4009,11 @@
             "material": {
                 "id": "food"
             },
-            "texture": "item/apple.png"
+            "texture": "item/apple.png",
+            "food": {
+                "amount": 4, 
+                "saturation": 0.3
+            }
         },
         {
             "id": 615,
@@ -5383,6 +5391,10 @@
             "texture": "item/melon_slice.png",
             "material": {
                 "id": "plant"
+            },
+            "food": {
+                "amount": 1, 
+                "saturation": 0.15
             }
         },
         {

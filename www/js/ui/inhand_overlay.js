@@ -117,7 +117,7 @@ export class InHandOverlay {
         }
         
         if (player.inMiningProcess || player.inItemUseProcess || this.mineTime > (delta * 10) / RENDER_DEFAULT_ARM_HIT_PERIOD) {
-            this.mineTime += delta / player.inhand_animation_duration;
+            this.mineTime += delta / (10 * RENDER_DEFAULT_ARM_HIT_PERIOD);
             if (this.mineTime >= 1) {
                 this.mineTime = 0;
             }
@@ -192,6 +192,30 @@ export class InHandOverlay {
             
             mat4.identity(modelMatrix);
             pos.set(0, 0, 0);
+            
+            let swingProgress = phasedTime;
+            let equipProgress = phasedTime;
+            
+            
+            mat4.translate(modelMatrix, modelMatrix,[0.56, 0.6, -0.71999997]);
+            mat4.translate(modelMatrix, modelMatrix,[0.0, equipProgress * 0.6, 0.0]);
+            
+            mat4.rotateZ(modelMatrix, modelMatrix, -135.0 * Math.PI / 180);
+            const f1 = Math.sin(-Math.sqrt(swingProgress) * Math.PI);
+            mat4.rotateX(modelMatrix, modelMatrix, f1 * 20.0 * Math.PI / 180);
+            mat4.rotateY(modelMatrix, modelMatrix, f1 * 80.0 * Math.PI / 180);
+            console.log(f1);
+            //mat4.scale(modelMatrix, modelMatrix, [0.4, 0.4, 0.4]);
+            
+            //mat4.translate(modelMatrix, modelMatrix,[0.5, 3.6, 0.0]);
+            //mat4.rotateX(modelMatrix, modelMatrix, -40.0 * Math.PI / 180);
+            //mat4.rotateY(modelMatrix, modelMatrix, -160.0 * Math.PI / 180);
+            //mat4.rotateZ(modelMatrix, modelMatrix, 60.0 * Math.PI / 180);
+            //GlStateManager.rotate(30.0F, 0.0F, 1.0F, 0.0F);
+            //GlStateManager.rotate(-80.0F, 1.0F, 0.0F, 0.0F);
+            //GlStateManager.rotate(60.0F, 0.0F, 1.0F, 0.0F);
+            
+            /*
 
             let animation_name = 'hit';
             if (block_material?.item?.name == 'food' && player.inItemUseProcess) {
@@ -223,7 +247,7 @@ export class InHandOverlay {
                     mat4.rotateZ(modelMatrix, modelMatrix, -Math.PI / 6);
                     break;
                 }
-            }
+            }*/
 
             inHandItemMesh.drawDirectly(render, modelMatrix);
         }

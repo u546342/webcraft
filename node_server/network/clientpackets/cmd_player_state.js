@@ -15,7 +15,7 @@ export default class packet_reader {
 
     // 
     static async read(player, packet) {
-        if(player.wait_portal) {
+        if(player.wait_portal || player.is_dead) {
             return true;
         }
         const data = decompressPlayerStateC(packet.data);

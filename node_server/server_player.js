@@ -13,6 +13,7 @@ import { MAX_PORTAL_SEARCH_DIST, PLAYER_MAX_DRAW_DISTANCE, PORTAL_USE_INTERVAL }
 import { WorldPortal, WorldPortalWait } from "../www/js/portal.js";
 import { CHUNK_STATE_BLOCKS_GENERATED } from "./server_chunk.js";
 import { ServerPlayerDamage } from "./player/damage.js";
+import { BLOCK } from "../www/js/blocks.js";
 
 export class NetworkMessage {
     constructor({
@@ -65,6 +66,17 @@ export class ServerPlayer extends Player {
         this.wait_portal            = null;
         this.prev_use_portal        = null; // время последнего использования портала
         this.prev_near_players      = new Map();
+        this.cast = {
+            item: 0,
+            cooldown: 0,
+            time: 0
+        };
+        this.food_tick_timer = 0;
+        this.live_level = 10;//this.state.indicators.live.value
+        this.food_level = 10;//this.state.indicators.food.value;
+        this.food_saturation_level = 0;
+        this.food_exhaustion_level = 0;
+        
     }
 
     init(init_info) {
@@ -313,6 +325,8 @@ export class ServerPlayer extends Player {
         await this.checkWaitPortal();
         // 6.
         this.damage.tick(delta, tick_number);
+        // 7.
+        if(tick_number % 2 == 1) this.checkCastTime();
     }
 
     async checkWaitPortal() {
@@ -432,7 +446,39 @@ export class ServerPlayer extends Player {
 
     //
     checkIndicators() {
-        if(!this.indicators_changed || this.is_dead) {
+        if(this.is_dead) {
+            return false;
+        }
+        if (this.food_exhaustion_level > 4) {
+            this.food_exhaustion_level -= 4;
+            if (this.food_saturation_level > 0) {
+                this.food_saturation_level = Math.max(this.food_saturation_level - 1, 0);
+            }
+        }
+        
+        if (this.food_level >= 18) {
+            this.food_timer++;
+            if (this.food_timer >= 80) {
+                this.live_level++;
+                this.food_timer = 0;
+                this.food_exhaustion_level = Math.min(this.food_exhaustion_level + 3, 40);
+            }
+        } else if (this.food_level <= 0) {
+            this.food_timer++;
+            if (this.food_timer >= 80) {
+                this.live_level--;
+                this.food_timer = 0;
+            }
+        } else {
+            this.food_timer = 0;
+        }
+        
+        if(this.state.indicators.live.value <= 0) {
+            this.is_dead = true;
+            this.state.stats.death++;
+        }
+        
+        /*if(!this.indicators_changed || this.is_dead) {
             return false;
         }
         this.indicators_changed = false;
@@ -456,6 +502,7 @@ export class ServerPlayer extends Player {
         }
         this.world.sendSelected(packets, [this.session.user_id], []);
         // @todo notify all about change?
+        */
     }
 
     // Teleport player if in portal
@@ -583,6 +630,24 @@ export class ServerPlayer extends Player {
             );
             teleported_player.state.pos = new_pos;
             world.chunks.checkPlayerVisibleChunks(teleported_player, true);
+        }
+    }
+    
+    checkCastTime() {
+        if (this.cast.time > 0) {
+            this.cast.time--;
+            if (this.cast.time == 0) {
+                console.log("cast")
+                // если использовали еду
+                const block = BLOCK.fromId(this.cast.item);
+                if (block.food) {
+                    console.log(this.state.indicators);
+                    this.changeIndicator('food', block.food.amount);
+                }
+            }
+        }
+        if (this.cast.cooldown > 0) {
+            this.cast.cooldown--;
         }
     }
 

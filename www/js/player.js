@@ -864,6 +864,7 @@ export class Player {
         const item_name = material?.item?.name;
         switch(item_name) {
             case 'food': {
+                this.world.server.Send({name: ServerClient.CMD_USE_ITEM, data: {start: true}});
                 this.inhand_animation_duration = RENDER_EAT_FOOD_DURATION;
                 this._eating_sound_tick = 0;
                 if(this._eating_sound) {
@@ -902,6 +903,7 @@ export class Player {
 
     // Stop use of item
     stopItemUse() {
+        this.world.server.Send({name: ServerClient.CMD_USE_ITEM, data: {start: false}});
         this.inItemUseProcess = false;
         if(this._eating_sound) {
             clearInterval(this._eating_sound);
