@@ -18,18 +18,14 @@ export default class packet_reader {
     // use item
     static async read(player, packet) {
         const data = packet.data;
-        const item = player.getItemInHand();
+        const index = player.inventory.current.index;
+        const item = player.inventory.items[index];
         if (item && item.count > 0 && player.cast.time == 0) {
             if (data.start) {
                 player.cast.item = item.id;
                 player.cast.time = TIME_CAST;
             }
         }
-        if (!data.start) {
-            player.cast.item = -1;
-            player.cast.time = 0;
-        }
-        console.log("!!! > " + data.start);
         // do nothing
         return true;
     }

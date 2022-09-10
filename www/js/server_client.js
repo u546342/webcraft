@@ -82,9 +82,6 @@ export class ServerClient {
     
     // Use items
     static CMD_USE_ITEM                 = 100;
-    
-    // Use effects
-    static CMD_EFFECTS_STATE            = 101;
 
     // Block actions
     static BLOCK_ACTION_CREATE          = 1;

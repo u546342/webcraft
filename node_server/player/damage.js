@@ -4,49 +4,11 @@ export class ServerPlayerDamage {
     
     constructor(player) {
         this.player = player;
-        
-        this.food_tick_timer = 0;
-        this.oxygen_tick_timer = 0;
     }
-    
-    
 
     tick(delta, tick_number) {
         const player = this.player;
-        if(player.is_dead || !player.game_mode.mayGetDamaged()) {
-            return false;
-        }
-        // food из вики
-        if (this.food_exhaustion_level > 4) {
-            this.food_exhaustion_level -= 4;
-            if (this.food_saturation_level > 0) {
-                this.food_saturation_level = Math.max(this.food_saturation_level - 1, 0);
-            } else {
-                this.food_level = Math.max(this.food_level - 1, 0);
-            }
-        }
-        if (this.food_level >= 18) {
-            this.food_timer++;
-            if (this.food_timer >= 80) {
-                this.food_timer = 0;
-                this.live_level = Math.min(this.live_level + 1, 20);
-                this.addExhaustion(3);
-            }
-        } else if (this.food_level <= 0) {
-            this.food_timer++;
-            if (this.food_timer >= 80) {
-                this.food_timer = 0;
-                this.live_level = Math.max(this.live_level - 1, 0);
-            }
-        } else {
-            this.food_timer = 0;
-        }
-        
-        
-        
-        
-        
-
+        const world = player.world;
         const params = {
             tick_number,
             tblocks: {
