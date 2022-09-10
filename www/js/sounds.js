@@ -20,7 +20,6 @@ export class Sounds {
             let volume = 1.;
             if(['step', 'entering_water', 'exiting_water', 'swim'].includes(action)) volume = .1;
             if(['hit', 'step', 'water_splash'].includes(action)) volume = .2;
-            if(['burp'].includes(action)) volume = .4;
             for(let i in item[action]) {
                 item[action][i] = {name: item[action][i], volume};
             }
@@ -34,7 +33,7 @@ export class Sounds {
         return Math.max(0, 1 - (dist / SOUND_MAX_DIST));
     }
 
-    play(tag, action, dist, ignore_repeating = false) {
+    play(tag, action, dist) {
         if(!this.tags.hasOwnProperty(tag)) {
             return;
         }
@@ -49,7 +48,7 @@ export class Sounds {
         do {
             // select random item from list
             index = Math.floor(Math.random() * list.length) | 0;
-        } while ((!ignore_repeating && prev_index == index) && list.length > 1);
+        } while (prev_index == index && list.length > 1);
         this.prev_index.set(index_key, index);
         // Play
         const track = list[index];

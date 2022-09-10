@@ -1,7 +1,7 @@
 import glMatrix from "../../vendors/gl-matrix-3.3.min.js";
 import { BLOCK } from "../blocks.js";
 import { Camera } from "../camera.js";
-import { RENDER_DEFAULT_ARM_HIT_PERIOD, RENDER_EAT_FOOD_DURATION } from "../constant.js";
+import { RENDER_DEFAULT_ARM_HIT_PERIOD } from "../constant.js";
 import { Mth, Vector } from "../helpers.js";
 import Particles_Block_Drop from "../particles/block_drop.js";
 import { Particle_Hand } from "../particles/block_hand.js";
@@ -31,11 +31,15 @@ export class InHandOverlay {
         this.inHandItemBroken = false;
         this.inHandItemId = -1;
 
+        this.handMesh = new Particle_Hand(skinId, render, false);
+
         this.changeAnimation = true;
         this.changAnimationTime = 0;
 
         this.minePeriod = 0;
         this.mineTime = 0;
+        
+        this.t = -1;
     }
 
     reconstructInHandItem(targetId) {
@@ -74,13 +78,13 @@ export class InHandOverlay {
 
     bobViewItem(player, viewMatrix) {
 
-        let frame = player.walking_frame * 2 % 1;
+        let p_109140_ = player.walking_frame * 2 % 1;
 
         //
         let speed_mul = 1.0;
         let f = (player.walkDist * speed_mul - player.walkDistO * speed_mul);
-        let f1 = -(player.walkDist * speed_mul + f * frame);
-        let f2 = Mth.lerp(frame, player.oBob, player.bob);
+        let f1 = -(player.walkDist * speed_mul + f * p_109140_);
+        let f2 = Mth.lerp(p_109140_, player.oBob, player.bob);
 
         f1 /= player.scale
         f2 /= player.scale
@@ -101,7 +105,7 @@ export class InHandOverlay {
 
     }
 
-    update(render, delta) {
+    update(render, dt) {
 
         const {
             player, renderBackend, camera
@@ -112,14 +116,24 @@ export class InHandOverlay {
 
         // const itsme = Qubatch.player.getModel()
         // this.mineTime = itsme.swingProgress;
+<<<<<<< HEAD
         if (!player.inMiningProcess && !player.inItemUseProcess) {
             this.mineTime = 0;
         }
         
         if (player.inMiningProcess || player.inItemUseProcess || this.mineTime > (delta * 10) / RENDER_DEFAULT_ARM_HIT_PERIOD) {
             this.mineTime += delta / (10 * RENDER_DEFAULT_ARM_HIT_PERIOD);
+=======
+
+        if (player.inMiningProcess || this.mineTime > dt * 2 / RENDER_DEFAULT_ARM_HIT_PERIOD) {
+            this.mineTime += dt / RENDER_DEFAULT_ARM_HIT_PERIOD;
+>>>>>>> parent of dafb883b (Merge branch 'task_4403_drink' into use_item)
             if (this.mineTime >= 1) {
                 this.mineTime = 0;
+            }
+            this.t += 0.01;
+            if (this.t > 1) {
+                this.t = -1;
             }
         } else {
             this.mineTime = 0;
@@ -133,7 +147,7 @@ export class InHandOverlay {
         }
 
         if (this.changeAnimation) {
-            this.changAnimationTime += 0.05 * delta;
+            this.changAnimationTime += 0.05 * dt;
 
             if (this.changAnimationTime > 0.5) {
                 this.reconstructInHandItem(id);
@@ -152,7 +166,7 @@ export class InHandOverlay {
         } = render;
 
         const {
-            camera, inHandItemMesh
+            camera, handMesh, inHandItemMesh
         } = this;
 
         this.update(render, dt);
@@ -182,16 +196,56 @@ export class InHandOverlay {
             clearDepth: true,
             clearColor: false
         });
-        
+
+        const animMatrix = mat4.identity(tmpMatrix);
         const phasedTime = this.mineTime;
-        
+
+        // shift matrix for left hand
+        const orient = handMesh.isLeft ? -1 : 1;
+        const attacPhase = Math.sin(phasedTime * phasedTime * Math.PI * 2 - Math.PI);
+        const rotPhase = Math.min(-attacPhase, 0);
+        const animY = (1 - Math.cos(phasedTime * Math.PI * 2)) * 0.5;
+
+        mat4.rotateZ(
+            animMatrix,
+            animMatrix,
+            -orient * rotPhase * Math.PI / 4
+        );
+
+        mat4.translate(animMatrix, animMatrix, [
+            orient,
+            attacPhase *  0.8,
+            animY * 0.8,
+        ]);
+
+        handMesh.drawDirectly(render, animMatrix);
+
+        mat4.rotateX(animMatrix, animMatrix, rotPhase * Math.PI / 4)
+
         if (inHandItemMesh) {
             const {
                 modelMatrix, block_material, pos
             } = inHandItemMesh;
-            
+
             mat4.identity(modelMatrix);
+<<<<<<< HEAD
             pos.set(0, 0, 0);
+            
+            //console.log("t: " + Math.round(this.t * 10) / 10 + " " + (360 * this.t ))
+            
+            mat4.rotateZ(modelMatrix, modelMatrix, 2 * Math.PI * this.t);
+            
+            
+            //mat4.rotateY(modelMatrix, modelMatrix, 54 * Math.PI / 360);
+           // mat4.rotateX(modelMatrix, modelMatrix, 64 * Math.PI / 360);
+            //mat4.rotateZ(modelMatrix, modelMatrix, (360 - 62) * Math.PI / 360);
+            //mat4.translate(modelMatrix, modelMatrix,[0.8, 0.8, -0.8]);
+            
+            
+            /*GlStateManager.rotate(54.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(64.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(-62.0F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.translate(0.25F, -0.85F, 0.75F);
             
             let swingProgress = phasedTime;
             let equipProgress = phasedTime;
@@ -214,7 +268,7 @@ export class InHandOverlay {
             //GlStateManager.rotate(30.0F, 0.0F, 1.0F, 0.0F);
             //GlStateManager.rotate(-80.0F, 1.0F, 0.0F, 0.0F);
             //GlStateManager.rotate(60.0F, 0.0F, 1.0F, 0.0F);
-            
+            */
             /*
 
             let animation_name = 'hit';
@@ -248,9 +302,25 @@ export class InHandOverlay {
                     break;
                 }
             }*/
+=======
+            pos.set(0,0,0);
 
-            inHandItemMesh.drawDirectly(render, modelMatrix);
+            // for axe and sticks
+            if (block_material.diagonal) {
+                mat4.scale(modelMatrix, modelMatrix, [0.8, 0.8, 0.8]);
+                mat4.rotateZ(modelMatrix, modelMatrix, -orient * 2 * Math.PI / 5);
+                mat4.rotateY(modelMatrix, modelMatrix, -Math.PI / 4);
+                pos.set(0,0.2,0);
+
+            } else {
+                mat4.scale(modelMatrix, modelMatrix, [0.5, 0.5, 0.5]);
+                mat4.rotateZ(modelMatrix, modelMatrix, -orient * Math.PI / 4 + Math.PI);
+            }
+>>>>>>> parent of dafb883b (Merge branch 'task_4403_drink' into use_item)
+
+            inHandItemMesh.drawDirectly(render, animMatrix);
         }
+
         renderBackend.endPass();
     }
 }

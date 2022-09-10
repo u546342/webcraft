@@ -10,7 +10,7 @@ import { PlayerWindowManager } from "./player_window_manager.js";
 import {Chat} from "./chat.js";
 import {GameMode, GAME_MODE} from "./game_mode.js";
 import {doBlockAction, WorldAction} from "./world_action.js";
-import { BODY_ROTATE_SPEED, MOB_EYE_HEIGHT_PERCENT, MOUSE, PLAYER_HEIGHT, PLAYER_ZOOM, RENDER_DEFAULT_ARM_HIT_PERIOD, RENDER_EAT_FOOD_DURATION } from "./constant.js";
+import { BODY_ROTATE_SPEED, MOB_EYE_HEIGHT_PERCENT, PLAYER_HEIGHT, PLAYER_ZOOM, RENDER_DEFAULT_ARM_HIT_PERIOD } from "./constant.js";
 import { compressPlayerStateC } from "./packet_compressor.js";
 
 const MAX_UNDAMAGED_HEIGHT              = 3;
@@ -26,7 +26,6 @@ export class Player {
 
     constructor(options) {
         this.inMiningProcess = false;
-        this.inItemUseProcess = false;
         this.options = options;
         this.scale = PLAYER_ZOOM;
         this.current_state = {
@@ -104,6 +103,7 @@ export class Player {
         this.body_rotate            = 0;
         this.body_rotate_o          = 0;
         this.body_rotate_speed      = BODY_ROTATE_SPEED;
+        this.effects                = [];
         //
         this.inventory              = new PlayerInventory(this, data.inventory, Qubatch.hud);
         this.pr                     = new PrismarinePlayerControl(this.world, this.pos, {}); // player control
@@ -143,6 +143,10 @@ export class Player {
         });
         this.world.server.AddCmdListener([ServerClient.CMD_ENTITY_INDICATORS], (cmd) => {
             this.indicators = cmd.data.indicators;
+            Qubatch.hud.refresh();
+        });
+        this.world.server.AddCmdListener([ServerClient.CMD_EFFECTS_STATE], (cmd) => {
+            this.effects = cmd.data.effects;
             Qubatch.hud.refresh();
         });
         // pickAt
@@ -283,7 +287,7 @@ export class Player {
                     Qubatch.sounds.play(sound, action);
                     if(player.running) {
                         // play destroy particles
-                        Qubatch.render.damageBlock(world_block.material, player.pos, true, this.scale, this.scale);
+                        Qubatch.render.damageBlock(world_block.material, player.pos, true, this.scale);
                     }
                 }
             }
@@ -299,49 +303,22 @@ export class Player {
         }
     }
 
-    // Stop all player activity
-    stopAllActivity() {
-        // clear all keyboard inputs
-        Qubatch.kb.clearStates();
-        // stop player movement states
-        this.controls.reset();
-        // reset mouse actions
-        this.resetMouseActivity();
-    }
-
-    // Stop all mouse actions, eating, mining, punching, etc...
-    resetMouseActivity() {
-        this.inMiningProcess = false;
-        this.inItemUseProcess = false;
-        if(this.pickAt) {
-            this.pickAt.resetProgress();
-        }
-        this.stopItemUse();
-    }
-
     // Hook for mouse input
     onMouseEvent(e) {
-        const {type, button_id, shiftKey} = e;
-        if(button_id == MOUSE.BUTTON_RIGHT) {
-            if(type == MOUSE.DOWN) {
-                const cur_mat_id = this.inventory.current_item?.id;
-                if(cur_mat_id) {
-                    const cur_mat = BLOCK.fromId(cur_mat_id);
-                    if(this.startItemUse(cur_mat)) {
-                        return false;
-                    }
-                }
-            } else {
-                this.stopItemUse();
-            }
-        }
-        if(type == MOUSE.DOWN) {
+        let {type, button_id, shiftKey} = e;
+        // Mouse actions
+        if (type == MOUSE.DOWN) {
+            // console.log(e.button_id, this.state.sitting, this.state.lies)
+            //if(e.button_id == 3 && (this.state.sitting || this.state.lies)) {
+            //    this.standUp();
+            //} else {
             this.pickAt.setEvent(this, {button_id, shiftKey});
-            if(e.button_id == MOUSE.BUTTON_LEFT) {
+            if(e.button_id == 1) {
                 this.startArmSwingProgress();
             }
+            //}
         } else if (type == MOUSE.UP) {
-            this.resetMouseActivity();
+            this.pickAt.clearEvent();
         }
     }
 
@@ -366,7 +343,6 @@ export class Player {
     async onPickAtTarget(e, times, number) {
 
         this.inMiningProcess = true;
-        this.inhand_animation_duration = 5 * RENDER_DEFAULT_ARM_HIT_PERIOD;
 
         let bPos = e.pos;
         // createBlock
@@ -446,6 +422,13 @@ export class Player {
             this._prevActionTime = performance.now();
         }
         return resp;
+    }
+
+    clearEvents() {
+        Qubatch.kb.clearStates()
+        this.pickAt.clearEvent();
+        this.inMiningProcess = false;
+        this.controls.reset();
     }
 
     //
@@ -825,6 +808,14 @@ export class Player {
         }
     }
 
+    //
+    clearStates() {
+        this.controls.reset();
+        this.pickAt.clearEvent();
+        this.pickAt.resetTargetPos();
+        this.inMiningProcess = false;
+    }
+
     // Отправка информации о позиции и ориентации игрока на сервер
     sendState() {
         const cs = this.current_state;
@@ -859,6 +850,7 @@ export class Player {
         }
     }
 
+<<<<<<< HEAD
     // Start use of item
     startItemUse(material) {
         const item_name = material?.item?.name;
@@ -911,4 +903,6 @@ export class Player {
         }
     }
 
+=======
+>>>>>>> parent of dafb883b (Merge branch 'task_4403_drink' into use_item)
 }

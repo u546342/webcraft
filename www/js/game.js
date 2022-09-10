@@ -121,7 +121,7 @@ export class GameClass {
                     hud.wm.mouseEventDispatcher({
                         type:       e.type,
                         shiftKey:   e.shiftKey,
-                        button_id:  e.button_id,
+                        button:     e.button,
                         offsetX:    e.offsetX * DPR,
                         offsetY:    e.offsetY * DPR,
                     });
@@ -141,7 +141,7 @@ export class GameClass {
                         that.hud.wm.mouseEventDispatcher({
                             type:       e.type,
                             shiftKey:   e.shiftKey,
-                            button_id:  e.button_id,
+                            button:     e.button,
                             offsetX:    e.offsetX * DPR,
                             offsetY:    e.offsetY * DPR
                         });
@@ -167,7 +167,7 @@ export class GameClass {
                                 original_event:     e,
                                 type:               e.type,
                                 shiftKey:           e.shiftKey,
-                                button_id:          e.button_id,
+                                button:             e.button,
                                 offsetX:            controls.mouseX * (that.hud.width / that.render.canvas.width),
                                 offsetY:            controls.mouseY * (that.hud.height / that.render.canvas.height)
                             });
@@ -564,7 +564,8 @@ export class GameClass {
                 this.setControlsEnabled(true);
             }  else {
                 this.setControlsEnabled(false);
-                this.player.stopAllActivity();
+                this.kb.clearStates();
+                this.player.clearStates();
                 if(!this.hud.wm.hasVisibleWindow() && !this.player.chat.active) {
                     // Safari emit ESC keyup since ~100 ms after pointer lock left event
                     // we should skip this ESC
