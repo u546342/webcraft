@@ -207,8 +207,9 @@ export class World {
 
     // Apply world actions
     async applyActions(actions, player) {
+        // console.log(actions.id);
         if(actions.open_window) {
-            player.stopAllActivity();
+            player.clearEvents();
             let args = null;
             let window_id = actions.open_window;
             if(typeof actions.open_window == 'object') {
@@ -226,7 +227,7 @@ export class World {
             console.error(actions.error);
         }
         if(actions.load_chest) {
-            player.stopAllActivity();
+            player.clearEvents();
             Qubatch.hud.wm.getWindow(actions.load_chest.window).load(actions.load_chest);
         }
         if(actions.play_sound) {
@@ -234,8 +235,11 @@ export class World {
                 Qubatch.sounds.play(item.tag, item.action);
             }
         }
-        if(actions.reset_mouse_actions) {
-            player.resetMouseActivity();
+        if(actions.reset_target_pos) {
+            player.pickAt.resetTargetPos();
+        }
+        if(actions.reset_target_event) {
+            player.pickAt.clearEvent();
         }
         if(actions.clone_block /* && player.game_mode.canBlockClone()*/) {
             this.server.CloneBlock(actions.clone_block);

@@ -1,4 +1,4 @@
-import { MAGIC_ROTATE_DIV, MOUSE } from "../constant.js";
+import { MAGIC_ROTATE_DIV } from "../constant.js";
 import { Vector } from "../helpers.js";
 
 export class JoystickController {
@@ -123,21 +123,21 @@ export class JoystickController {
             }
             case 'atack': {
                 if(state) {
-                    const button_id = MOUSE.BUTTON_LEFT;
+                    const button_id = 1;
                     const shiftKey = false;
                     pickAt.setEvent(player, {button_id, shiftKey});
                 } else {
-                    player.stopAllActivity();
+                    player.clearEvents();
                 }
                 break;
             }
             case 'place': {
                 if(state) {
-                    const button_id = MOUSE.BUTTON_RIGHT;
+                    const button_id = 3;
                     const shiftKey = false;
                     pickAt.setEvent(player, {button_id, shiftKey});
                 } else {
-                    player.stopAllActivity();
+                    player.clearEvents();
                 }
                 break;
             }

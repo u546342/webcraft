@@ -23,7 +23,9 @@ export class PlayerInventory extends Inventory {
         // Action on change slot
         this.onSelect = (item) => {
             // Вызывается при переключении активного слота в инвентаре
-            player.resetMouseActivity();
+            if(player.pickAt) {
+                player.pickAt.resetProgress();
+            }
             player.world.server.InventorySelect(this.current);
             Qubatch.hud.refresh();
         };
