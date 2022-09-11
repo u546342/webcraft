@@ -377,7 +377,8 @@ export class Player {
     async onPickAtTarget(e, times, number) {
 
         this.inMiningProcess = true;
-        this.inhand_animation_duration = 5 * RENDER_DEFAULT_ARM_HIT_PERIOD;
+        this.mineTime = 0;
+        this.inhand_animation_duration = 2.5 * RENDER_DEFAULT_ARM_HIT_PERIOD;
 
         let bPos = e.pos;
         // createBlock
@@ -540,7 +541,7 @@ export class Player {
 
     // Updates this local player (gravity, movement)
     update(delta) {
-        this.inMiningProcess = false;
+
         // View
         if(this.lastUpdate) {
 
@@ -915,6 +916,7 @@ export class Player {
                 return false;
             }
         }
+        this.mineTime = 0
         return this.inItemUseProcess = true;
     }
 
@@ -969,31 +971,18 @@ export class Player {
 
     getAttackAnim(pPartialTicks, delta) {
 
-        // const itsme = Qubatch.player.getModel()
         // this.mineTime = itsme.swingProgress;
-        if (!this.inMiningProcess && !this.inItemUseProcess) {
-            this.mineTime = 0;
+        if(!this.inMiningProcess && !this.inItemUseProcess && this.mineTime == 0) {
+            return 0;
         }
-        if (this.inMiningProcess || this.inItemUseProcess || this.mineTime > (delta * 2) / RENDER_DEFAULT_ARM_HIT_PERIOD) {
-            this.mineTime += delta / this.inhand_animation_duration;
-            if (this.mineTime >= 1) {
-                this.mineTime = 0;
-            }
-        } else {
+
+        this.mineTime += delta / this.inhand_animation_duration;
+
+        if (this.mineTime >= 1) {
             this.mineTime = 0;
         }
 
         return this.mineTime;
-
-        // const pSwingProgress = this.mineTime;
-        let pSwingProgress = performance.now() / 1000;
-        const even = Math.floor(pSwingProgress) % 2 == 1;
-        pSwingProgress %= 1
-        if(even) {
-            pSwingProgress = 1 - pSwingProgress
-        }
-
-        return pSwingProgress;
 
     }
 
